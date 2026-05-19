@@ -292,12 +292,33 @@ function requestWithdrawal() {
 }
 
 // ==========================================
-// 👑 SUPER ADMIN SECTION
+// 👑 SUPER ADMIN SECTION (Updated with Analytics)
 // ==========================================
 function loadAdminDashboard() {
     document.getElementById('auth-section').classList.add('hidden');
     document.getElementById('admin-dashboard').classList.remove('hidden');
     
+    // NAYA ANALYTICS CALCULATION
+    const todayDateStr = new Date().toLocaleDateString();
+    let lifeEarn = 0, todayEarn = 0, pendBonus = 0, sentBonus = 0;
+    
+    orders.forEach(o => {
+        if (o.status === 'approved') {
+            lifeEarn += o.price;
+            if (o.date.split(',')[0].trim() === todayDateStr) { todayEarn += o.price; }
+        }
+    });
+    
+    referrals.forEach(ref => {
+        if (ref.status === 'success') { pendBonus += ref.bonus; }
+        if (ref.status === 'credited') { sentBonus += ref.bonus; }
+    });
+
+    document.getElementById('stat-life-earn').innerText = lifeEarn;
+    document.getElementById('stat-today-earn').innerText = todayEarn;
+    document.getElementById('stat-pend-bonus').innerText = pendBonus;
+    document.getElementById('stat-sent-bonus').innerText = sentBonus;
+
     const ordersTable = document.getElementById('admin-orders-list');
     ordersTable.innerHTML = '';
     orders.filter(o => o.status === 'pending').forEach(o => {
@@ -311,12 +332,19 @@ function loadAdminDashboard() {
     adminWithdrawalTable.innerHTML = '';
     
     let pendingReqs = [];
+    let todayReqCount = 0;
     Object.keys(users).forEach(id => {
         if (users[id].withdrawalRequested && !users[id].isBanned) {
             pendingReqs.push({ id: id, time: users[id].withdrawalRequestTime || 0 });
+            
+            const reqDateStr = new Date(users[id].withdrawalRequestTime).toLocaleDateString();
+            if(reqDateStr === todayDateStr) { todayReqCount++; }
         }
     });
     pendingReqs.sort((a, b) => a.time - b.time);
+
+    document.getElementById('stat-total-req').innerText = pendingReqs.length;
+    document.getElementById('stat-today-req').innerText = todayReqCount;
 
     pendingReqs.forEach(req => {
         const userId = req.id;

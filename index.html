@@ -90,6 +90,35 @@
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
 
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px;">
+                <div style="background: #e6fffa; padding: 15px; border-radius: 8px; border: 1px solid #319795; text-align: center;">
+                    <p style="font-size: 0.75rem; color: #285e61; font-weight: bold;">LIFETIME EARNING</p>
+                    <h3 style="color: #319795; margin-top: 5px;">₹<span id="stat-life-earn">0</span></h3>
+                </div>
+                <div style="background: #ebf8ff; padding: 15px; border-radius: 8px; border: 1px solid #3182ce; text-align: center;">
+                    <p style="font-size: 0.75rem; color: #2b6cb0; font-weight: bold;">TODAY's EARNING</p>
+                    <h3 style="color: #3182ce; margin-top: 5px;">₹<span id="stat-today-earn">0</span></h3>
+                </div>
+                <div style="background: #fff5f5; padding: 15px; border-radius: 8px; border: 1px solid #e53e3e; text-align: center;">
+                    <p style="font-size: 0.75rem; color: #c53030; font-weight: bold;">PENDING BONUS</p>
+                    <h3 style="color: #e53e3e; margin-top: 5px;">₹<span id="stat-pend-bonus">0</span></h3>
+                </div>
+                <div style="background: #f0fff4; padding: 15px; border-radius: 8px; border: 1px solid #38a169; text-align: center;">
+                    <p style="font-size: 0.75rem; color: #276749; font-weight: bold;">TOTAL BONUS SENT</p>
+                    <h3 style="color: #38a169; margin-top: 5px;">₹<span id="stat-sent-bonus">0</span></h3>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <div style="flex: 1; background: #fffaf0; padding: 10px; border-radius: 8px; border: 1px solid #dd6b20; text-align: center;">
+                    <p style="font-size: 0.75rem; color: #9c4221; font-weight: bold;">TODAY'S WITHDRAWAL REQ.</p>
+                    <h3 style="color: #dd6b20; margin-top: 5px;"><span id="stat-today-req">0</span></h3>
+                </div>
+                <div style="flex: 1; background: #f7fafc; padding: 10px; border-radius: 8px; border: 1px solid #4a5568; text-align: center;">
+                    <p style="font-size: 0.75rem; color: #2d3748; font-weight: bold;">TOTAL PENDING REQ.</p>
+                    <h3 style="color: #4a5568; margin-top: 5px;"><span id="stat-total-req">0</span></h3>
+                </div>
+            </div>
             <div class="admin-mock-panel" style="margin-bottom: 20px; border-color: #63b3ed;">
                 <h3>🖼️ Add Wallpaper to Store</h3>
                 <div class="admin-grid">
@@ -263,18 +292,3 @@
             <h2 id="modal-user-title" style="color: var(--accent-color); margin-bottom: 10px;">User Details</h2>
             <div class="modal-stats" style="margin-bottom: 15px;">
                 <p><strong>Name:</strong> <span id="mod-name"></span></p>
-                <p><strong>UPI ID:</strong> <span id="mod-upi"></span></p>
-                <p><strong>Purchase Limit:</strong> ₹<span id="mod-limit"></span></p>
-                <p><strong>T&C Agreed:</strong> <span id="mod-tc"></span></p>
-                <p><strong>Account Status:</strong> <span id="mod-status"></span></p>
-            </div>
-            <div id="modal-actions" style="display: flex; gap: 10px; flex-direction: column;"></div>
-        </div>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    
-    <script src="app.js"></script>
-</body>
-</html>
