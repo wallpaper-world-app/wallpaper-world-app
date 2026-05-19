@@ -292,3 +292,18 @@
             <h2 id="modal-user-title" style="color: var(--accent-color); margin-bottom: 10px;">User Details</h2>
             <div class="modal-stats" style="margin-bottom: 15px;">
                 <p><strong>Name:</strong> <span id="mod-name"></span></p>
+                <p><strong>UPI ID:</strong> <span id="mod-upi"></span></p>
+                <p><strong>Purchase Limit:</strong> ₹<span id="mod-limit"></span></p>
+                <p><strong>T&C Agreed:</strong> <span id="mod-tc"></span></p>
+                <p><strong>Account Status:</strong> <span id="mod-status"></span></p>
+            </div>
+            <div id="modal-actions" style="display: flex; gap: 10px; flex-direction: column;"></div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <script src="app.js"></script>
+</body>
+</html>

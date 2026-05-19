@@ -1,4 +1,4 @@
-// FIREBASE CONFIGURATION (Aapki Nayi Chaabi)
+// FIREBASE CONFIGURATION 
 const firebaseConfig = {
     apiKey: "AIzaSyANhZRelI5tmdLHU6k6-Zs46PflKMZxIhk",
     authDomain: "wallpaper-world1.firebaseapp.com",
@@ -48,7 +48,7 @@ async function loadDataFromFirebase() {
         }
     } catch (error) {
         console.error("Firebase Error: ", error);
-        alert("Database connection successful, par test mode rule set nahi hai ya internet issue hai.");
+        alert("Database load error. Internet connection check karein.");
     }
 }
 loadDataFromFirebase(); 
@@ -292,13 +292,12 @@ function requestWithdrawal() {
 }
 
 // ==========================================
-// 👑 SUPER ADMIN SECTION (Updated with Analytics)
+// 👑 SUPER ADMIN SECTION (With Analytics)
 // ==========================================
 function loadAdminDashboard() {
     document.getElementById('auth-section').classList.add('hidden');
     document.getElementById('admin-dashboard').classList.remove('hidden');
     
-    // NAYA ANALYTICS CALCULATION
     const todayDateStr = new Date().toLocaleDateString();
     let lifeEarn = 0, todayEarn = 0, pendBonus = 0, sentBonus = 0;
     
@@ -480,7 +479,7 @@ function toggleBanUser(userId) {
     });
 }
 
-// Modal Closures
+// Modal Closures & Utilities
 function closeAdminModal() { document.getElementById('user-modal').classList.add('hidden'); }
 function logout() { currentUser = null; localStorage.removeItem('ww_current_user'); location.reload(); }
 function copyLink() {
