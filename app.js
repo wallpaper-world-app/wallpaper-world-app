@@ -240,8 +240,9 @@ function renderStore() {
     });
 }
 
+// APNE FIXED LINK (imjo.in) KE LIYE LOGIC REWRITE KIYA HAI
 function redirectToInstamojo(itemId, url) {
-    if (!url || !url.includes('instamojo')) {
+    if (!url || (!url.includes('instamojo') && !url.includes('imjo.in'))) {
         alert("Payment link is not set correctly by Admin."); return;
     }
     localStorage.setItem('pendingOrder_user', currentUser);
@@ -395,7 +396,6 @@ function loadAdminDashboard() {
         allUsersTable.appendChild(row);
     });
 
-    // YAHAN NAYA DELETE WALLPAPER LIST KA CODE ADD HUA HAI
     const adminStoreList = document.getElementById('admin-store-list');
     if (adminStoreList) {
         adminStoreList.innerHTML = '';
@@ -525,7 +525,6 @@ function toggleBanUser(userId) {
     });
 }
 
-// === NAYA DELETE WALLPAPER FUNCTION ===
 function deleteWallpaper(itemId) {
     if (confirm("Are you sure you want to delete this wallpaper? Naye customers ise nahi dekh payenge.")) {
         db.collection('store').doc(itemId).delete().then(() => {
