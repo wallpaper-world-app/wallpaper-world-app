@@ -33,7 +33,6 @@ async function checkPaymentStatus() {
         const pItem = localStorage.getItem('pendingOrder_item');
         
         if (pUser && pItem) {
-            // Firebase load hone ka wait karein
             setTimeout(async () => {
                 const item = storeItems.find(i => i.id === pItem);
                 if (item) {
@@ -60,7 +59,6 @@ async function checkPaymentStatus() {
     }
 }
 checkPaymentStatus();
-// ==========================================
 
 // DATABASE SE DATA FETCH KARNA
 async function loadDataFromFirebase() {
@@ -396,6 +394,22 @@ function loadAdminDashboard() {
         `;
         allUsersTable.appendChild(row);
     });
+
+    // YAHAN NAYA DELETE WALLPAPER LIST KA CODE ADD HUA HAI
+    const adminStoreList = document.getElementById('admin-store-list');
+    if (adminStoreList) {
+        adminStoreList.innerHTML = '';
+        storeItems.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><img src="${item.imgUrl}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"></td>
+                <td>${item.name}</td>
+                <td>₹${item.price}</td>
+                <td><button onclick="deleteWallpaper('${item.id}')" style="background:#e53e3e; color:#fff; padding:5px 10px; border:none; border-radius:4px; cursor:pointer;">Delete</button></td>
+            `;
+            adminStoreList.appendChild(row);
+        });
+    }
 }
 
 function adminAddWallpaper() {
@@ -424,6 +438,8 @@ function adminAddWallpaper() {
         document.getElementById('adm-wall-img').value = '';
         document.getElementById('adm-wall-drive').value = '';
         document.getElementById('adm-wall-instamojo').value = ''; 
+        loadAdminDashboard();
+        renderStore();
     });
 }
 
@@ -507,6 +523,21 @@ function toggleBanUser(userId) {
         alert(newStatus ? 'User Banned!' : 'User Activated!');
         closeAdminModal(); loadAdminDashboard();
     });
+}
+
+// === NAYA DELETE WALLPAPER FUNCTION ===
+function deleteWallpaper(itemId) {
+    if (confirm("Are you sure you want to delete this wallpaper? Naye customers ise nahi dekh payenge.")) {
+        db.collection('store').doc(itemId).delete().then(() => {
+            storeItems = storeItems.filter(item => item.id !== itemId);
+            alert("🗑️ Wallpaper successfully deleted!");
+            loadAdminDashboard();
+            renderStore();
+        }).catch(error => {
+            console.error("Error deleting wallpaper: ", error);
+            alert("Failed to delete wallpaper. Check connection.");
+        });
+    }
 }
 
 // Modal Closures & Utilities
