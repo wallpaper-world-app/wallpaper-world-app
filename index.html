@@ -119,6 +119,7 @@
                     <h3 style="color: #4a5568; margin-top: 5px;"><span id="stat-total-req">0</span></h3>
                 </div>
             </div>
+            
             <div class="admin-mock-panel" style="margin-bottom: 20px; border-color: #63b3ed;">
                 <h3>🖼️ Add Wallpaper to Store</h3>
                 <div class="admin-grid">
@@ -126,6 +127,7 @@
                     <input type="number" id="adm-wall-price" placeholder="Price (₹)">
                     <input type="text" id="adm-wall-img" placeholder="Watermark Image URL (Preview)">
                     <input type="text" id="adm-wall-drive" placeholder="Google Drive Link (HD without Watermark)">
+                    <input type="text" id="adm-wall-instamojo" placeholder="Instamojo Payment Link (Important)">
                     <button onclick="adminAddWallpaper()" style="background:#63b3ed; color:#000;">Publish to Store</button>
                 </div>
             </div>
@@ -133,7 +135,7 @@
             <h4>Approve Customer Orders</h4>
             <div class="table-responsive" style="margin-bottom: 20px;">
                 <table>
-                    <thead><tr><th>Customer</th><th>Product</th><th>Price</th><th>UTR/Ref No.</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Customer</th><th>Product</th><th>Price</th><th>Instamojo ID</th><th>Action</th></tr></thead>
                     <tbody id="admin-orders-list"></tbody>
                 </table>
             </div>
@@ -262,27 +264,6 @@
                 </div>
                 <button type="submit" class="btn-main">Reset Password</button>
             </form>
-        </div>
-    </div>
-
-    <div id="payment-modal" class="modal hidden">
-        <div class="modal-content card" style="text-align: center;">
-            <span class="close" onclick="closePaymentModal()">&times;</span>
-            <h3 style="color:var(--accent-color);">Secure Checkout</h3>
-            <p id="pay-item-name" style="font-weight:bold; margin-bottom:10px;"></p>
-            <h2 id="pay-item-price" style="margin-bottom:15px;"></h2>
-            
-            <div style="background:white; padding:10px; display:inline-block; border-radius:10px; margin-bottom:15px;">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=YOUR_UPI_ID@bank&pn=WallpaperWorld" alt="Scan to Pay" style="width:150px; height:150px;">
-            </div>
-            
-            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:15px;">Scan the QR code to pay via any UPI app. Enter the 12-digit UTR/Ref number below to verify your purchase.</p>
-            
-            <div class="input-group">
-                <input type="text" id="payment-utr" placeholder="Enter 12-Digit UTR/Reference No." required>
-            </div>
-            <button onclick="submitPaymentProof()" class="btn-main">Verify Payment</button>
-            <input type="hidden" id="pay-item-id">
         </div>
     </div>
 

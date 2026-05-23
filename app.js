@@ -22,6 +22,46 @@ let currentUser = localStorage.getItem('ww_current_user') || null;
 const ADMIN_ID = "sultan7151";
 const ADMIN_PASS = "S@7151221s";
 
+// === AUTOMATIC PAYMENT VERIFICATION LOGIC ===
+async function checkPaymentStatus() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment_status');
+    const paymentId = urlParams.get('payment_id');
+    
+    if (paymentStatus === 'Credit') {
+        const pUser = localStorage.getItem('pendingOrder_user');
+        const pItem = localStorage.getItem('pendingOrder_item');
+        
+        if (pUser && pItem) {
+            // Firebase load hone ka wait karein
+            setTimeout(async () => {
+                const item = storeItems.find(i => i.id === pItem);
+                if (item) {
+                    const newOrder = {
+                        orderId: paymentId || ('ORD_' + Date.now()),
+                        buyer: pUser, itemId: pItem, itemName: item.name, 
+                        price: item.price, utr: paymentId || 'Instamojo', status: 'pending', date: new Date().toLocaleString()
+                    };
+                    
+                    await db.collection('orders').doc(newOrder.orderId).set(newOrder);
+                    orders.push(newOrder);
+                    alert("✅ Payment Successful! Your order has been placed. Admin will verify it shortly.");
+                    
+                    localStorage.removeItem('pendingOrder_user');
+                    localStorage.removeItem('pendingOrder_item');
+                    
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }, 3000); 
+        }
+    } else if (paymentStatus === 'Failed') {
+        alert("❌ Payment Failed. Please try again.");
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
+checkPaymentStatus();
+// ==========================================
+
 // DATABASE SE DATA FETCH KARNA
 async function loadDataFromFirebase() {
     try {
@@ -97,7 +137,6 @@ function handleRegister(event) {
         withdrawalRequestTime: null, isBanned: false, tcAgreedAt: currentDateTime 
     };
 
-    // Firebase Write
     db.collection('users').doc(instaId).set(newUser).then(() => {
         users[instaId] = newUser;
         alert('✅ Account created successfully! Please log in.');
@@ -185,7 +224,7 @@ function handleUpdateProfile(event) {
     });
 }
 
-// Render Functions
+// Render Functions & Redirect
 function renderStore() {
     const container = document.getElementById('store-items-container');
     container.innerHTML = '';
@@ -197,10 +236,19 @@ function renderStore() {
         if (myBoughtIds.includes(item.id)) {
             div.innerHTML = `<img src="${item.imgUrl}"><h5>${item.name}</h5><p>Purchased</p><a href="${item.driveLink}" target="_blank" class="btn-dl">Download HD</a>`;
         } else {
-            div.innerHTML = `<img src="${item.imgUrl}"><h5>${item.name}</h5><p>₹${item.price}</p><button class="btn-buy" onclick="openPaymentModal('${item.id}', '${item.name}', ${item.price})">Buy Now</button>`;
+            div.innerHTML = `<img src="${item.imgUrl}"><h5>${item.name}</h5><p>₹${item.price}</p><button class="btn-buy" onclick="redirectToInstamojo('${item.id}', '${item.instamojoLink}')">Pay via Instamojo</button>`;
         }
         container.appendChild(div);
     });
+}
+
+function redirectToInstamojo(itemId, url) {
+    if (!url || !url.includes('instamojo')) {
+        alert("Payment link is not set correctly by Admin."); return;
+    }
+    localStorage.setItem('pendingOrder_user', currentUser);
+    localStorage.setItem('pendingOrder_item', itemId);
+    window.location.href = url; 
 }
 
 function renderMyDownloads() {
@@ -216,34 +264,6 @@ function renderMyDownloads() {
             div.innerHTML = `<img src="${item.imgUrl}"><h5>${item.name}</h5><a href="${item.driveLink}" target="_blank" class="btn-dl">Download HD</a>`;
             container.appendChild(div);
         }
-    });
-}
-
-function openPaymentModal(id, name, price) {
-    document.getElementById('pay-item-id').value = id;
-    document.getElementById('pay-item-name').innerText = name;
-    document.getElementById('pay-item-price').innerText = '₹' + price;
-    document.getElementById('payment-utr').value = '';
-    document.getElementById('payment-modal').classList.remove('hidden');
-}
-function closePaymentModal() { document.getElementById('payment-modal').classList.add('hidden'); }
-
-function submitPaymentProof() {
-    const utr = document.getElementById('payment-utr').value.trim();
-    if(utr.length < 5) { alert("Please enter a valid UTR number."); return; }
-    
-    const itemId = document.getElementById('pay-item-id').value;
-    const item = storeItems.find(i => i.id === itemId);
-
-    const newOrder = {
-        orderId: 'ORD_' + Date.now(), buyer: currentUser, itemId: itemId, itemName: item.name, 
-        price: item.price, utr: utr, status: 'pending', date: new Date().toLocaleString()
-    };
-
-    db.collection('orders').doc(newOrder.orderId).set(newOrder).then(() => {
-        orders.push(newOrder);
-        alert("✅ Order Submitted! Your payment will be verified shortly.");
-        closePaymentModal();
     });
 }
 
@@ -322,7 +342,7 @@ function loadAdminDashboard() {
     ordersTable.innerHTML = '';
     orders.filter(o => o.status === 'pending').forEach(o => {
         const row = document.createElement('tr');
-        row.innerHTML = `<td>${o.buyer}</td><td>${o.itemName}</td><td>₹${o.price}</td><td>${o.utr}</td>
+        row.innerHTML = `<td>${o.buyer}</td><td>${o.itemName}</td><td>₹${o.price}</td><td style="font-size:0.8rem;">${o.utr}</td>
         <td><button onclick="approveOrder('${o.orderId}')" style="background:#48bb78; color:#fff; padding:5px; border:none; cursor:pointer; border-radius:4px;">Approve</button></td>`;
         ordersTable.appendChild(row);
     });
@@ -379,14 +399,23 @@ function loadAdminDashboard() {
 }
 
 function adminAddWallpaper() {
-    const name = document.getElementById('adm-wall-name').value;
-    const price = document.getElementById('adm-wall-price').value;
-    const img = document.getElementById('adm-wall-img').value;
-    const drive = document.getElementById('adm-wall-drive').value;
+    const name = document.getElementById('adm-wall-name').value.trim();
+    const price = document.getElementById('adm-wall-price').value.trim();
+    const img = document.getElementById('adm-wall-img').value.trim();
+    const drive = document.getElementById('adm-wall-drive').value.trim();
+    const instamojoUrl = document.getElementById('adm-wall-instamojo').value.trim(); 
 
-    if(!name || !price || !img || !drive) { alert("Please fill all fields!"); return; }
+    if(!name || !price || !img || !drive || !instamojoUrl) { alert("Please fill all fields, including Instamojo Link!"); return; }
 
-    const newItem = { id: 'W_' + Date.now(), name: name, price: parseFloat(price), imgUrl: img, driveLink: drive };
+    const newItem = { 
+        id: 'W_' + Date.now(), 
+        name: name, 
+        price: parseFloat(price), 
+        imgUrl: img, 
+        driveLink: drive,
+        instamojoLink: instamojoUrl 
+    };
+    
     db.collection('store').doc(newItem.id).set(newItem).then(() => {
         storeItems.push(newItem);
         alert("✅ Wallpaper successfully added to the store!");
@@ -394,6 +423,7 @@ function adminAddWallpaper() {
         document.getElementById('adm-wall-price').value = '';
         document.getElementById('adm-wall-img').value = '';
         document.getElementById('adm-wall-drive').value = '';
+        document.getElementById('adm-wall-instamojo').value = ''; 
     });
 }
 
