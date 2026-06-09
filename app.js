@@ -222,7 +222,7 @@ function renderStore() {
     });
 }
 
-// Razorpay Order Creation and Modal Management Frontend Flow
+// Razorpay Order Creation and Modal Management Frontend Flow (AUTOMATED & SECURE)
 async function payWithRazorpay(itemId, price) {
     if (!currentUser) { alert("Please log in to purchase wallpapers."); return; }
     
@@ -242,7 +242,7 @@ async function payWithRazorpay(itemId, price) {
 
         // 2. Razorpay Window Modal Option Parameters configuration
         const options = {
-            key: "rzp_live_SzXXGobm5zLdcN", // Aapki ekdum Nayi Live Key ID yahan set ho gayi hai
+            key: "rzp_live_SzXXGobm5zLdcN", 
             amount: orderData.amount,
             currency: orderData.currency,
             name: "Wallpaper World",
@@ -262,25 +262,63 @@ async function payWithRazorpay(itemId, price) {
 
                 const verifyData = await verifyResponse.json();
 
+                // STATUS SEEDHE 'approved' TABHI HOGA JAB SERVER SE PAYMENT SUCCESS VERIFY HOGI
                 if (verifyResponse.ok && verifyData.status === 'success') {
-                    // Firebase cloud collection sync and order update triggers mapping
+                    const newOrderId = response.razorpay_order_id;
                     const newOrder = {
-                        orderId: response.razorpay_order_id,
+                        orderId: newOrderId,
                         buyer: currentUser, 
                         itemId: itemId, 
                         itemName: item.name, 
                         price: item.price, 
                         utr: response.razorpay_payment_id, 
-                        status: 'pending', 
+                        status: 'approved', 
                         date: new Date().toLocaleString()
                     };
                     
-                    await db.collection('orders').doc(newOrder.orderId).set(newOrder);
+                    await db.collection('orders').doc(newOrderId).set(newOrder);
                     orders.push(newOrder);
                     
-                    alert("✅ Payment Successful! Your order has been placed. Admin will verify it shortly.");
+                    // --- AUTOMATIC LIMIT UPGRADE & REFERRAL BONUS SETTLEMENT LOGIC ---
+                    const buyerObj = users[currentUser];
+                    if (buyerObj) {
+                        // 1. User ki account purchase limit automatically upgrade karein
+                        if (item.price > buyerObj.purchaseValue) {
+                            await db.collection('users').doc(currentUser).update({ purchaseValue: item.price });
+                            buyerObj.purchaseValue = item.price;
+                            
+                            // On-hold base referrals ko check karke automatic resolve karein
+                            referrals.forEach(ref => {
+                                if (ref.referredBy === currentUser && ref.status === 'on_hold' && item.price >= ref.price) {
+                                    ref.status = 'success'; 
+                                    db.collection('referrals').doc(ref.id).update({ status: 'success' });
+                                }
+                            });
+                        }
+
+                        // 2. Referrer ko 50% commission automatically track aur settle karein
+                        if (buyerObj.referredBy) {
+                            const referrerObj = users[buyerObj.referredBy];
+                            if (referrerObj) {
+                                const commStatus = (item.price > referrerObj.purchaseValue) ? 'on_hold' : 'success';
+                                const newRef = { 
+                                    id: 'REF_' + Date.now(), 
+                                    referredBy: buyerObj.referredBy, 
+                                    buyer: currentUser, 
+                                    price: item.price, 
+                                    bonus: item.price * 0.50, 
+                                    status: commStatus 
+                                };
+                                referrals.push(newRef);
+                                await db.collection('referrals').doc(newRef.id).set(newRef);
+                            }
+                        }
+                    }
+                    
+                    alert("✅ Payment Successful! Your wallpaper is ready to download.");
                     renderStore();
                     renderMyDownloads();
+                    if(currentUser === 'admin_master' || currentUser === ADMIN_ID) { loadAdminDashboard(); }
                 } else {
                     alert('Payment Security Verification Failed: ' + verifyData.message);
                 }
@@ -367,7 +405,7 @@ function renderReferralsAndWallet() {
 
     if (userObj.withdrawalCount === 0) {
         if (successfulCount >= 2 && totalPendingBonus > 0) { wBtn.classList.remove('hidden'); wMsg.innerText = "You are eligible to withdraw!"; } 
-        else { wBtn.classList.add('hidden'); wMsg.innerText = `Minimum 2 successful referrals required. Current: ${successfulCount}`; }
+        else { wBtn.add('hidden'); wMsg.innerText = `Minimum 2 successful referrals required. Current: ${successfulCount}`; }
     } else {
         if (totalPendingBonus > 0) { wBtn.classList.remove('hidden'); wMsg.innerText = "Balance ready for withdrawal."; } 
         else { wBtn.classList.add('hidden'); wMsg.innerText = "Need new verified referrals."; }
