@@ -22,7 +22,7 @@ let currentUser = localStorage.getItem('ww_current_user') || null;
 const ADMIN_ID = "sultan7151";
 const ADMIN_PASS = "S@7151221s";
 
-// === AUTOMATIC PAYMENT VERIFICATION LOGIC ===
+// === AUTOMATIC PAYMENT VERIFICATION LOGIC (LEGACY INSTAMOJO CHECK) ===
 async function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment_status');
@@ -204,6 +204,108 @@ function loadProfileData() {
     document.getElementById('prof-pass').value = ""; 
 }
 
+// Render Functions & RAZORPAY INTEGRATION BLOCK
+function renderStore() {
+    const container = document.getElementById('store-items-container');
+    container.innerHTML = '';
+    const myBoughtIds = orders.filter(o => o.buyer === currentUser && o.status === 'approved').map(o => o.itemId);
+
+    storeItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'store-item';
+        if (myBoughtIds.includes(item.id)) {
+            div.innerHTML = `<img src="${item.imgUrl}"><h5>${item.name}</h5><p>Purchased</p><a href="${item.driveLink}" target="_blank" class="btn-dl">Download HD</a>`;
+        } else {
+            div.innerHTML = `<img src="${item.imgUrl}"><h5>${item.name}</h5><p>₹${item.price}</p><button class="btn-buy" onclick="payWithRazorpay('${item.id}', ${item.price})">Buy Now</button>`;
+        }
+        container.appendChild(div);
+    });
+}
+
+// Razorpay Order Creation and Modal Management Frontend Flow
+async function payWithRazorpay(itemId, price) {
+    if (!currentUser) { alert("Please log in to purchase wallpapers."); return; }
+    
+    const amountInPaise = price * 100;
+    const item = storeItems.find(i => i.id === itemId);
+
+    try {
+        // 1. Backend API Function trigger karke Order ID banana
+        const orderResponse = await fetch('/api/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: amountInPaise, receipt: 'rcpt_' + itemId })
+        });
+
+        const orderData = await orderResponse.json();
+        if (!orderResponse.ok) { alert('Order Error: ' + orderData.error); return; }
+
+        // 2. Razorpay Window Modal Option Parameters configuration
+        const options = {
+            key: "rzp_live_SzXXGobm5zLdcN", // Aapki ekdum Nayi Live Key ID yahan set ho gayi hai
+            amount: orderData.amount,
+            currency: orderData.currency,
+            name: "Wallpaper World",
+            description: `Purchase Premium: ${item.name}`,
+            order_id: orderData.order_id,
+            handler: async function (response) {
+                // 3. Signature verification serverless logic verification routing
+                const verifyResponse = await fetch('/api/verify-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature
+                    })
+                });
+
+                const verifyData = await verifyResponse.json();
+
+                if (verifyResponse.ok && verifyData.status === 'success') {
+                    // Firebase cloud collection sync and order update triggers mapping
+                    const newOrder = {
+                        orderId: response.razorpay_order_id,
+                        buyer: currentUser, 
+                        itemId: itemId, 
+                        itemName: item.name, 
+                        price: item.price, 
+                        utr: response.razorpay_payment_id, 
+                        status: 'pending', 
+                        date: new Date().toLocaleString()
+                    };
+                    
+                    await db.collection('orders').doc(newOrder.orderId).set(newOrder);
+                    orders.push(newOrder);
+                    
+                    alert("✅ Payment Successful! Your order has been placed. Admin will verify it shortly.");
+                    renderStore();
+                    renderMyDownloads();
+                } else {
+                    alert('Payment Security Verification Failed: ' + verifyData.message);
+                }
+            },
+            modal: {
+                ondismiss: function () { console.log('Payment checkout window was closed by user.'); }
+            },
+            theme: { color: "#63b3ed" }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+            alert('Transaction Declined: ' + response.error.description);
+        });
+        rzp.open();
+
+    } catch (error) {
+        console.error('Razorpay Setup Error:', error);
+        alert('Server connection timeout. Kripya dobara koshish karein.');
+    }
+}
+
+// Kept for backward compatibility fallback architecture safely
+function redirectToInstamojo(itemId, url) { payWithRazorpay(itemId, 10); }
+
 function handleUpdateProfile(event) {
     event.preventDefault();
     const name = document.getElementById('prof-name').value.trim();
@@ -220,34 +322,6 @@ function handleUpdateProfile(event) {
         document.getElementById('user-display-name').innerText = name;
         alert("✅ Profile updated successfully!");
     });
-}
-
-// Render Functions & Redirect
-function renderStore() {
-    const container = document.getElementById('store-items-container');
-    container.innerHTML = '';
-    const myBoughtIds = orders.filter(o => o.buyer === currentUser && o.status === 'approved').map(o => o.itemId);
-
-    storeItems.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'store-item';
-        if (myBoughtIds.includes(item.id)) {
-            div.innerHTML = `<img src="${item.imgUrl}"><h5>${item.name}</h5><p>Purchased</p><a href="${item.driveLink}" target="_blank" class="btn-dl">Download HD</a>`;
-        } else {
-            div.innerHTML = `<img src="${item.imgUrl}"><h5>${item.name}</h5><p>₹${item.price}</p><button class="btn-buy" onclick="redirectToInstamojo('${item.id}', '${item.instamojoLink}')">Pay via Instamojo</button>`;
-        }
-        container.appendChild(div);
-    });
-}
-
-// APNE FIXED LINK (imjo.in) KE LIYE LOGIC REWRITE KIYA HAI
-function redirectToInstamojo(itemId, url) {
-    if (!url || (!url.includes('instamojo') && !url.includes('imjo.in'))) {
-        alert("Payment link is not set correctly by Admin."); return;
-    }
-    localStorage.setItem('pendingOrder_user', currentUser);
-    localStorage.setItem('pendingOrder_item', itemId);
-    window.location.href = url; 
 }
 
 function renderMyDownloads() {
@@ -419,7 +493,7 @@ function adminAddWallpaper() {
     const drive = document.getElementById('adm-wall-drive').value.trim();
     const instamojoUrl = document.getElementById('adm-wall-instamojo').value.trim(); 
 
-    if(!name || !price || !img || !drive || !instamojoUrl) { alert("Please fill all fields, including Instamojo Link!"); return; }
+    if(!name || !price || !img || !drive) { alert("Please fill all mandatory fields (Title, Price, Image, Drive Link)!"); return; }
 
     const newItem = { 
         id: 'W_' + Date.now(), 
@@ -427,7 +501,7 @@ function adminAddWallpaper() {
         price: parseFloat(price), 
         imgUrl: img, 
         driveLink: drive,
-        instamojoLink: instamojoUrl 
+        instamojoLink: instamojoUrl || 'razorpay' 
     };
     
     db.collection('store').doc(newItem.id).set(newItem).then(() => {
@@ -501,6 +575,7 @@ function payFromModal(userId) {
     }
 }
 
+// Modal Closures & Utilities
 function viewUserDetails(userId) {
     const user = users[userId];
     document.getElementById('modal-user-title').innerText = userId;
@@ -539,7 +614,6 @@ function deleteWallpaper(itemId) {
     }
 }
 
-// Modal Closures & Utilities
 function closeAdminModal() { document.getElementById('user-modal').classList.add('hidden'); }
 function logout() { currentUser = null; localStorage.removeItem('ww_current_user'); location.reload(); }
 function copyLink() {

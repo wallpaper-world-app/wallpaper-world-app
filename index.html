@@ -127,7 +127,7 @@
                     <input type="number" id="adm-wall-price" placeholder="Price (₹)">
                     <input type="text" id="adm-wall-img" placeholder="Watermark Image URL (Preview)">
                     <input type="text" id="adm-wall-drive" placeholder="Google Drive Link (HD without Watermark)">
-                    <input type="text" id="adm-wall-instamojo" placeholder="Instamojo Payment Link (Important)">
+                    <input type="text" id="adm-wall-instamojo" placeholder="Not needed for Razorpay (Leave Blank)">
                     <button onclick="adminAddWallpaper()" style="background:#63b3ed; color:#000;">Publish to Store</button>
                 </div>
             </div>
@@ -144,7 +144,7 @@
             <h4>Approve Customer Orders</h4>
             <div class="table-responsive" style="margin-bottom: 20px;">
                 <table>
-                    <thead><tr><th>Customer</th><th>Product</th><th>Price</th><th>Instamojo ID</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Customer</th><th>Product</th><th>Price</th><th>Payment ID</th><th>Action</th></tr></thead>
                     <tbody id="admin-orders-list"></tbody>
                 </table>
             </div>
@@ -294,6 +294,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
