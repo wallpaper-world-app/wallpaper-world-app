@@ -22,6 +22,23 @@ let currentUser = localStorage.getItem('ww_current_user') || null;
 const ADMIN_ID = "sultan7151";
 const ADMIN_PASS = "S@7151221s";
 
+// HELPER FUNCTION: INSTANT COPY TO CLIPBOARD
+function copyText(text) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+        alert("📋 Copied to clipboard: " + text);
+    }).catch(err => {
+        // Fallback approach for in-app browsers
+        const el = document.createElement('textarea');
+        el.value = text;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        alert("📋 Copied to clipboard: " + text);
+    });
+}
+
 // === AUTOMATIC PAYMENT VERIFICATION LOGIC (LEGACY INSTAMOJO CHECK) ===
 async function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -142,6 +159,7 @@ function handleRegister(event) {
     });
 }
 
+// Login logic mapping
 function handleLogin(event) {
     event.preventDefault();
     const instaId = document.getElementById('login-insta').value.trim().toLowerCase();
@@ -204,7 +222,6 @@ function loadProfileData() {
     document.getElementById('prof-pass').value = ""; 
 }
 
-// Render Functions & RAZORPAY INTEGRATION BLOCK
 function renderStore() {
     const container = document.getElementById('store-items-container');
     container.innerHTML = '';
@@ -230,7 +247,6 @@ async function payWithRazorpay(itemId, price) {
     const item = storeItems.find(i => i.id === itemId);
 
     try {
-        // 1. Backend API Function trigger karke Order ID banana
         const orderResponse = await fetch('/api/create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -240,7 +256,6 @@ async function payWithRazorpay(itemId, price) {
         const orderData = await orderResponse.json();
         if (!orderResponse.ok) { alert('Order Error: ' + orderData.error); return; }
 
-        // 2. Razorpay Window Modal Option Parameters configuration
         const options = {
             key: "rzp_live_SzXXGobm5zLdcN", 
             amount: orderData.amount,
@@ -249,7 +264,6 @@ async function payWithRazorpay(itemId, price) {
             description: `Purchase Premium: ${item.name}`,
             order_id: orderData.order_id,
             handler: async function (response) {
-                // 3. Signature verification serverless logic verification routing
                 const verifyResponse = await fetch('/api/verify-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -262,7 +276,6 @@ async function payWithRazorpay(itemId, price) {
 
                 const verifyData = await verifyResponse.json();
 
-                // STATUS SEEDHE 'approved' TABHI HOGA JAB SERVER SE PAYMENT SUCCESS VERIFY HOGI
                 if (verifyResponse.ok && verifyData.status === 'success') {
                     const newOrderId = response.razorpay_order_id;
                     const newOrder = {
@@ -279,15 +292,12 @@ async function payWithRazorpay(itemId, price) {
                     await db.collection('orders').doc(newOrderId).set(newOrder);
                     orders.push(newOrder);
                     
-                    // --- AUTOMATIC LIMIT UPGRADE & REFERRAL BONUS SETTLEMENT LOGIC ---
                     const buyerObj = users[currentUser];
                     if (buyerObj) {
-                        // 1. User ki account purchase limit automatically upgrade karein
                         if (item.price > buyerObj.purchaseValue) {
                             await db.collection('users').doc(currentUser).update({ purchaseValue: item.price });
                             buyerObj.purchaseValue = item.price;
                             
-                            // On-hold base referrals ko check karke automatic resolve karein
                             referrals.forEach(ref => {
                                 if (ref.referredBy === currentUser && ref.status === 'on_hold' && item.price >= ref.price) {
                                     ref.status = 'success'; 
@@ -296,7 +306,6 @@ async function payWithRazorpay(itemId, price) {
                             });
                         }
 
-                        // 2. Referrer ko 50% commission automatically track aur settle karein
                         if (buyerObj.referredBy) {
                             const referrerObj = users[buyerObj.referredBy];
                             if (referrerObj) {
@@ -341,7 +350,6 @@ async function payWithRazorpay(itemId, price) {
     }
 }
 
-// Kept for backward compatibility fallback architecture safely
 function redirectToInstamojo(itemId, url) { payWithRazorpay(itemId, 10); }
 
 function handleUpdateProfile(event) {
@@ -405,7 +413,7 @@ function renderReferralsAndWallet() {
 
     if (userObj.withdrawalCount === 0) {
         if (successfulCount >= 2 && totalPendingBonus > 0) { wBtn.classList.remove('hidden'); wMsg.innerText = "You are eligible to withdraw!"; } 
-        else { wBtn.add('hidden'); wMsg.innerText = `Minimum 2 successful referrals required. Current: ${successfulCount}`; }
+        else { wBtn.classList.add('hidden'); wMsg.innerText = `Minimum 2 successful referrals required. Current: ${successfulCount}`; }
     } else {
         if (totalPendingBonus > 0) { wBtn.classList.remove('hidden'); wMsg.innerText = "Balance ready for withdrawal."; } 
         else { wBtn.classList.add('hidden'); wMsg.innerText = "Need new verified referrals."; }
@@ -422,9 +430,9 @@ function requestWithdrawal() {
     });
 }
 
-// ==========================================
-// 👑 SUPER ADMIN SECTION (With Analytics)
-// ==========================================
+// ==========================================================
+// 👑 SUPER ADMIN SECTION (WITH AUTOMATED DATA BREAKDOWNS)
+// ==========================================================
 function loadAdminDashboard() {
     document.getElementById('auth-section').classList.add('hidden');
     document.getElementById('admin-dashboard').classList.remove('hidden');
@@ -439,8 +447,14 @@ function loadAdminDashboard() {
         }
     });
     
+    // Group active success bonuses by referrer to create a visual breakdown map
+    let activeBonusBreakdown = {};
     referrals.forEach(ref => {
-        if (ref.status === 'success') { pendBonus += ref.bonus; }
+        if (ref.status === 'success') { 
+            pendBonus += ref.bonus; 
+            if (!activeBonusBreakdown[ref.referredBy]) { activeBonusBreakdown[ref.referredBy] = 0; }
+            activeBonusBreakdown[ref.referredBy] += ref.bonus;
+        }
         if (ref.status === 'credited') { sentBonus += ref.bonus; }
     });
 
@@ -449,6 +463,56 @@ function loadAdminDashboard() {
     document.getElementById('stat-pend-bonus').innerText = pendBonus;
     document.getElementById('stat-sent-bonus').innerText = sentBonus;
 
+    // --- DYNAMICALLY INJECT PENDING BONUS BREAKDOWN TABLE IF NOT EXISTS ---
+    let breakdownHTML = `
+        <div id="admin-bonus-breakdown-container" style="background:#1a202c; border:1px solid #2d3748; padding:15px; border-radius:8px; margin-top:20px; margin-bottom:20px;">
+            <h4 style="color:#ed8936; margin-top:0; margin-bottom:12px; font-size:1.1rem;">📋 Pending Bonus User Breakdown (Total: ₹${pendBonus})</h4>
+            <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.9rem;">
+                <thead>
+                    <tr style="border-bottom:2px solid #2d3748; color:#a0aec0;">
+                        <th style="padding:8px;">Insta / User ID</th>
+                        <th style="padding:8px;">Full Name</th>
+                        <th style="padding:8px;">UPI ID</th>
+                        <th style="padding:8px;">Hold Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    const bonusUserKeys = Object.keys(activeBonusBreakdown);
+    if (bonusUserKeys.length === 0) {
+        breakdownHTML += `<tr><td colspan="4" style="padding:10px; color:#a0aec0; text-align:center;">No users hold an active pending balance yet.</td></tr>`;
+    } else {
+        bonusUserKeys.forEach(uId => {
+            const uObj = users[uId] || { name: 'Unknown Account', upiId: 'N/A' };
+            breakdownHTML += `
+                <tr style="border-bottom:1px solid #2d3748;">
+                    <td style="padding:8px;"><strong>${uId}</strong></td>
+                    <td style="padding:8px;">${uObj.name}</td>
+                    <td style="padding:8px;">
+                        <span style="font-family:monospace; background:#2d3748; padding:2px 6px; border-radius:4px; color:#cbd5e0;">${uObj.upiId}</span>
+                        ${uObj.upiId !== 'N/A' ? `<button onclick="copyText('${uObj.upiId}')" style="background:#3182ce; color:#fff; padding:3px 8px; margin-left:6px; border:none; border-radius:4px; cursor:pointer; font-size:0.75rem; font-weight:bold;">Copy</button>` : ''}
+                    </td>
+                    <td style="padding:8px; color:#ed8936; font-weight:bold; font-size:1rem;">₹${activeBonusBreakdown[uId]}</td>
+                </tr>
+            `;
+        });
+    }
+    breakdownHTML += `</tbody></table></div>`;
+
+    // Inject breakdown segment dynamically directly inside the view layout
+    let existingSection = document.getElementById('admin-bonus-breakdown-container');
+    if (existingSection) {
+        existingSection.outerHTML = breakdownHTML;
+    } else {
+        const insertionTarget = document.getElementById('admin-orders-list') || document.getElementById('admin-withdrawal-list');
+        if (insertionTarget) {
+            const parentTableElement = insertionTarget.closest('table') || insertionTarget;
+            parentTableElement.insertAdjacentHTML('beforebegin', breakdownHTML);
+        }
+    }
+
+    // Render Orders Table
     const ordersTable = document.getElementById('admin-orders-list');
     ordersTable.innerHTML = '';
     orders.filter(o => o.status === 'pending').forEach(o => {
@@ -458,6 +522,7 @@ function loadAdminDashboard() {
         ordersTable.appendChild(row);
     });
 
+    // Render Withdrawal Queue with Names, IDs, and Instant Copy Mechanism
     const adminWithdrawalTable = document.getElementById('admin-withdrawal-list');
     adminWithdrawalTable.innerHTML = '';
     
@@ -478,6 +543,7 @@ function loadAdminDashboard() {
 
     pendingReqs.forEach(req => {
         const userId = req.id;
+        const uObj = users[userId] || { name: 'N/A', upiId: 'N/A' };
         const dateObj = new Date(req.time);
         const timeStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString();
         let payAmount = 0;
@@ -486,9 +552,12 @@ function loadAdminDashboard() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td style="font-size:0.8rem;">${timeStr}</td>
-            <td><strong>${userId}</strong></td>
-            <td>${users[userId].upiId}</td>
-            <td style="color:#00ff88; font-weight:bold;">₹${payAmount}</td>
+            <td><strong>${userId}</strong><br><span style="font-size:0.8rem; color:#a0aec0;">(${uObj.name})</span></td>
+            <td>
+                <span style="font-family:monospace; background:#2d3748; padding:3px 6px; border-radius:4px; color:#cbd5e0; font-size:0.85rem;">${uObj.upiId}</span>
+                <button onclick="copyText('${uObj.upiId}')" style="background:#3182ce; color:#fff; padding:3px 8px; margin-left:6px; border:none; border-radius:4px; cursor:pointer; font-size:0.75rem; font-weight:bold;">Copy UPI</button>
+            </td>
+            <td style="color:#00ff88; font-weight:bold; font-size:1rem;">₹${payAmount}</td>
             <td><button onclick="payFromModal('${userId}')" style="background:#48bb78; color:#fff; padding:5px; border:none; border-radius:4px; cursor:pointer;">Pay User</button></td>
         `;
         adminWithdrawalTable.appendChild(row);
