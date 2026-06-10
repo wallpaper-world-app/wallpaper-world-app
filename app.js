@@ -28,7 +28,6 @@ function copyText(text) {
     navigator.clipboard.writeText(text).then(() => {
         alert("📋 Copied to clipboard: " + text);
     }).catch(err => {
-        // Fallback approach for in-app browsers
         const el = document.createElement('textarea');
         el.value = text;
         document.body.appendChild(el);
@@ -159,7 +158,6 @@ function handleRegister(event) {
     });
 }
 
-// Login logic mapping
 function handleLogin(event) {
     event.preventDefault();
     const instaId = document.getElementById('login-insta').value.trim().toLowerCase();
@@ -447,7 +445,6 @@ function loadAdminDashboard() {
         }
     });
     
-    // Group active success bonuses by referrer to create a visual breakdown map
     let activeBonusBreakdown = {};
     referrals.forEach(ref => {
         if (ref.status === 'success') { 
@@ -500,7 +497,6 @@ function loadAdminDashboard() {
     }
     breakdownHTML += `</tbody></table></div>`;
 
-    // Inject breakdown segment dynamically directly inside the view layout
     let existingSection = document.getElementById('admin-bonus-breakdown-container');
     if (existingSection) {
         existingSection.outerHTML = breakdownHTML;
@@ -522,7 +518,7 @@ function loadAdminDashboard() {
         ordersTable.appendChild(row);
     });
 
-    // Render Withdrawal Queue with Names, IDs, and Instant Copy Mechanism
+    // Render Withdrawal Queue
     const adminWithdrawalTable = document.getElementById('admin-withdrawal-list');
     adminWithdrawalTable.innerHTML = '';
     
@@ -563,13 +559,21 @@ function loadAdminDashboard() {
         adminWithdrawalTable.appendChild(row);
     });
 
+    // --- CUSTOMERS DATABASE & LOGS LIST (WITH DYNAMIC REFERRAL TRACKER) ---
     const allUsersTable = document.getElementById('admin-all-users-list');
     allUsersTable.innerHTML = '';
     Object.keys(users).forEach(userId => {
         const u = users[userId];
+        
+        // Referrals array se calculate karein ki is specific user ne kitne logo ko successfully add kiya hai
+        const totalUserReferrals = referrals.filter(ref => ref.referredBy === userId).length;
+
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${userId}</td>
+            <td>
+                <strong>${userId}</strong><br>
+                <span style="font-size:0.8rem; color:#3182ce; font-weight:bold;">👥 Refs: ${totalUserReferrals} users</span>
+            </td>
             <td>₹${u.purchaseValue}</td>
             <td style="font-size:0.75rem;">${u.tcAgreedAt}</td>
             <td><button onclick="viewUserDetails('${userId}')" style="background:var(--border-color); color:#fff; padding:5px 10px; border:none; border-radius:4px; cursor:pointer;">Manage</button></td>
@@ -685,7 +689,10 @@ function payFromModal(userId) {
 // Modal Closures & Utilities
 function viewUserDetails(userId) {
     const user = users[userId];
-    document.getElementById('modal-user-title').innerText = userId;
+    const totalUserReferrals = referrals.filter(ref => ref.referredBy === userId).length;
+
+    // Manage Modal panel configuration details
+    document.getElementById('modal-user-title').innerText = `${userId} (Refs: ${totalUserReferrals})`;
     document.getElementById('mod-name').innerText = user.name;
     document.getElementById('mod-upi').innerText = user.upiId;
     document.getElementById('mod-limit').innerText = user.purchaseValue;
@@ -721,6 +728,7 @@ function deleteWallpaper(itemId) {
     }
 }
 
+// Global functions mappings definitions
 function closeAdminModal() { document.getElementById('user-modal').classList.add('hidden'); }
 function logout() { currentUser = null; localStorage.removeItem('ww_current_user'); location.reload(); }
 function copyLink() {
