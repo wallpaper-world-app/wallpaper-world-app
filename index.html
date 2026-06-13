@@ -4,16 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wallpaper World - Premium Store & Earn</title>
+    <!-- Modern Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app-container">
         <header class="brand-header">
-            <h1>Wallpaper World</h1>
+            <h1 class="glow-text">Wallpaper World</h1>
             <p>Premium Wallpapers & Affiliate Earning</p>
         </header>
 
-        <div id="auth-section" class="card">
+        <div id="auth-section" class="card fade-in">
             <div class="tabs">
                 <button id="tab-login" class="tab-btn active" onclick="switchTab('login')">Login</button>
                 <button id="tab-register" class="tab-btn" onclick="switchTab('register')">Register</button>
@@ -22,14 +24,14 @@
             <form id="login-form" onsubmit="handleLogin(event)">
                 <div class="input-group">
                     <label>Instagram ID</label>
-                    <input type="text" id="login-insta" required>
+                    <input type="text" id="login-insta" placeholder="@username" required>
                 </div>
                 <div class="input-group">
                     <label>Password</label>
-                    <input type="password" id="login-pass" required>
+                    <input type="password" id="login-pass" placeholder="••••••••" required>
                 </div>
-                <p style="text-align: right; font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">
-                    <a href="#" onclick="openForgotPassModal()" style="color: var(--accent-color); text-decoration: none;">Forgot Password?</a>
+                <p style="text-align: right; font-size: 0.85rem; margin-top: -10px; margin-bottom: 20px;">
+                    <a href="#" onclick="openForgotPassModal()" class="text-link">Forgot Password?</a>
                 </p>
                 <button type="submit" class="btn-main">Login to Dashboard</button>
             </form>
@@ -37,23 +39,23 @@
             <form id="register-form" onsubmit="handleRegister(event)" class="hidden">
                 <div class="input-group">
                     <label>Full Name</label>
-                    <input type="text" id="reg-name" required>
+                    <input type="text" id="reg-name" placeholder="John Doe" required>
                 </div>
                 <div class="input-group">
                     <label>Instagram ID (Without @)</label>
-                    <input type="text" id="reg-insta" required>
+                    <input type="text" id="reg-insta" placeholder="username" required>
                 </div>
                 <div class="input-group">
                     <label>Create Password</label>
-                    <input type="password" id="reg-pass" required>
+                    <input type="password" id="reg-pass" placeholder="••••••••" required>
                 </div>
                 <div class="input-group">
                     <label>UPI ID (For Payouts)</label>
-                    <input type="text" id="reg-upi" required>
+                    <input type="text" id="reg-upi" placeholder="yourname@upi" required>
                 </div>
                 <div class="input-group">
                     <label>Age</label>
-                    <input type="number" id="reg-age" required>
+                    <input type="number" id="reg-age" placeholder="18" required>
                 </div>
                 <div class="input-group">
                     <label>Profession</label>
@@ -65,75 +67,78 @@
                 </div>
 
                 <div class="tc-box">
-                    <h4 style="color:var(--accent-color); text-align:center;">COMMUNITY RULES</h4>
+                    <h4>COMMUNITY RULES & LEGAL TERMS</h4>
                     <p><strong>1. VOLUNTARY PARTICIPATION:</strong> Joining is 100% your choice. We never force anyone to pay, buy, or refer others.</p>
-                    <p><strong>2. ELIGIBILITY & REFERRAL:</strong> Any user joining the Wallpaper World community is eligible. Only active customers can use our referral system to earn. Rewards are given for verified referrals only.</p>
-                    <p><strong>3. SIMPLE AGREEMENT:</strong> Rewards depend on your own dedication and work. No Guarantees: We do not promise fixed income.</p>
-                    <p><strong>4. USAGE & SAFETY:</strong> Account Safety: One person = One account. Cheating = Ban. Wallpapers are for personal use only. Right to Change: Rules may be updated for community safety.</p>
-                    <p><strong>5. PAYMENT & PAYOUTS:</strong> Minimum withdrawal limits apply as per the dashboard.</p>
-                    <div style="border:1px solid #4a5568; padding:8px; margin-top:10px;">
-                        <p style="font-size:0.75rem;"><strong>OFFICIAL STATEMENT:</strong> Participation is optional. Agreement is mandatory for access.<br><strong>DISCLAIMER:</strong> We do not pressure for financial investment. This is an optional earning opportunity.</p>
+                    <p><strong>2. STRICT NO REFUND POLICY:</strong> As our products are digital downloadable goods (4K Wallpapers), ALL SALES ARE FINAL. There are absolutely no refunds, returns, or exchanges once a purchase is made. Please buy at your own risk and responsibility.</p>
+                    <p><strong>3. CHARGEBACKS & DISPUTES:</strong> Filing false disputes or chargebacks with your financial institution, credit card issuer, or our payment gateway after receiving the digital product is strictly prohibited. Such actions will be treated as digital theft and fraud, resulting in a permanent account ban and potential reporting to cybercrime authorities.</p>
+                    <p><strong>4. NOT AN INVESTMENT SCHEME:</strong> Wallpaper World is purely a digital e-commerce store. The referral program is an optional reward system for active customers, NOT an investment, MLM, or guaranteed income scheme. We do not solicit investments.</p>
+                    <p><strong>5. ACCOUNT SAFETY & LIABILITY:</strong> One person = One account. Wallpapers are for personal use only. By using this platform, you agree that the administrators hold no legal liability for any direct or indirect losses incurred. You use this service entirely at your own risk.</p>
+                    <p><strong>6. PAYMENT & PAYOUTS:</strong> Minimum withdrawal limits apply. Payouts are subject to verification and may take 24 to 72 hours to process and reflect in your account.</p>
+                    <p><strong>7. 24/7 CUSTOMER SUPPORT:</strong> Should you face any issues or have inquiries regarding your account or purchases, our dedicated support team is available 24/7. We are committed to investigating your concerns and providing a prompt resolution as quickly as possible.</p>
+                    <div class="disclaimer-box">
+                        <p><strong>OFFICIAL STATEMENT:</strong> Participation is optional. Agreement to these terms is mandatory for access.</p>
+                        <p style="margin-top: 5px;"><strong>LEGAL DISCLAIMER:</strong> By creating an account, you legally agree to waive any rights to dispute payments for delivered digital goods. We comply with all legal guidelines and strictly monitor fraudulent activities.</p>
                     </div>
                 </div>
 
                 <div class="checkbox-group">
                     <input type="checkbox" id="reg-tc" required>
-                    <label for="reg-tc">I have read and agree to the Terms & Conditions.</label>
+                    <label for="reg-tc">I have read and legally agree to the Terms & Conditions.</label>
                 </div>
                 <button type="submit" class="btn-main">Create Account</button>
             </form>
         </div>
 
-        <div id="admin-dashboard" class="card hidden">
+        <div id="admin-dashboard" class="card hidden fade-in">
             <div class="user-welcome">
                 <h3>👑 Admin Control Panel</h3>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px;">
-                <div style="background: #e6fffa; padding: 15px; border-radius: 8px; border: 1px solid #319795; text-align: center;">
-                    <p style="font-size: 0.75rem; color: #285e61; font-weight: bold;">LIFETIME EARNING</p>
-                    <h3 style="color: #319795; margin-top: 5px;">₹<span id="stat-life-earn">0</span></h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <p>LIFETIME EARNING</p>
+                    <h3 class="text-gradient">₹<span id="stat-life-earn">0</span></h3>
                 </div>
-                <div style="background: #ebf8ff; padding: 15px; border-radius: 8px; border: 1px solid #3182ce; text-align: center;">
-                    <p style="font-size: 0.75rem; color: #2b6cb0; font-weight: bold;">TODAY's EARNING</p>
-                    <h3 style="color: #3182ce; margin-top: 5px;">₹<span id="stat-today-earn">0</span></h3>
+                <div class="stat-card">
+                    <p>TODAY's EARNING</p>
+                    <h3 class="text-gradient">₹<span id="stat-today-earn">0</span></h3>
                 </div>
-                <div style="background: #fff5f5; padding: 15px; border-radius: 8px; border: 1px solid #e53e3e; text-align: center;">
-                    <p style="font-size: 0.75rem; color: #c53030; font-weight: bold;">PENDING BONUS</p>
-                    <h3 style="color: #e53e3e; margin-top: 5px;">₹<span id="stat-pend-bonus">0</span></h3>
+                <div class="stat-card">
+                    <p>PENDING BONUS</p>
+                    <h3 class="text-danger">₹<span id="stat-pend-bonus">0</span></h3>
                 </div>
-                <div style="background: #f0fff4; padding: 15px; border-radius: 8px; border: 1px solid #38a169; text-align: center;">
-                    <p style="font-size: 0.75rem; color: #276749; font-weight: bold;">TOTAL BONUS SENT</p>
-                    <h3 style="color: #38a169; margin-top: 5px;">₹<span id="stat-sent-bonus">0</span></h3>
-                </div>
-            </div>
-            
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <div style="flex: 1; background: #fffaf0; padding: 10px; border-radius: 8px; border: 1px solid #dd6b20; text-align: center;">
-                    <p style="font-size: 0.75rem; color: #9c4221; font-weight: bold;">TODAY'S WITHDRAWAL REQ.</p>
-                    <h3 style="color: #dd6b20; margin-top: 5px;"><span id="stat-today-req">0</span></h3>
-                </div>
-                <div style="flex: 1; background: #f7fafc; padding: 10px; border-radius: 8px; border: 1px solid #4a5568; text-align: center;">
-                    <p style="font-size: 0.75rem; color: #2d3748; font-weight: bold;">TOTAL PENDING REQ.</p>
-                    <h3 style="color: #4a5568; margin-top: 5px;"><span id="stat-total-req">0</span></h3>
+                <div class="stat-card">
+                    <p>TOTAL BONUS SENT</p>
+                    <h3 class="text-success">₹<span id="stat-sent-bonus">0</span></h3>
                 </div>
             </div>
             
-            <div class="admin-mock-panel" style="margin-bottom: 20px; border-color: #63b3ed;">
+            <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="stat-card border-warning">
+                    <p>TODAY'S WITHDRAWAL REQ.</p>
+                    <h3 class="text-warning"><span id="stat-today-req">0</span></h3>
+                </div>
+                <div class="stat-card">
+                    <p>TOTAL PENDING REQ.</p>
+                    <h3><span id="stat-total-req">0</span></h3>
+                </div>
+            </div>
+            
+            <div class="admin-mock-panel">
                 <h3>🖼️ Add Wallpaper to Store</h3>
                 <div class="admin-grid">
                     <input type="text" id="adm-wall-name" placeholder="Wallpaper Title (e.g., 4K Anime)">
                     <input type="number" id="adm-wall-price" placeholder="Price (₹)">
                     <input type="text" id="adm-wall-img" placeholder="Watermark Image URL (Preview)">
-                    <input type="text" id="adm-wall-drive" placeholder="Google Drive Link (HD without Watermark)">
+                    <input type="text" id="adm-wall-drive" placeholder="Google Drive Link (HD)">
                     <input type="text" id="adm-wall-instamojo" placeholder="Not needed for Razorpay (Leave Blank)">
-                    <button onclick="adminAddWallpaper()" style="background:#63b3ed; color:#000;">Publish to Store</button>
+                    <button onclick="adminAddWallpaper()" class="btn-main">Publish to Store</button>
                 </div>
             </div>
 
-            <div class="admin-mock-panel" style="margin-bottom: 20px; border-color: #fc8181;">
-                <h3 style="color: #c53030;">🗑️ Manage Store Items (Delete Wallpapers)</h3>
+            <div class="admin-mock-panel border-danger">
+                <h3 class="text-danger">🗑️ Manage Store Items</h3>
                 <div class="table-responsive">
                     <table>
                         <thead><tr><th>Preview</th><th>Name</th><th>Price</th><th>Action</th></tr></thead>
@@ -141,23 +146,24 @@
                     </table>
                 </div>
             </div>
-            <h4>Approve Customer Orders</h4>
-            <div class="table-responsive" style="margin-bottom: 20px;">
+
+            <h4 class="section-title">Approve Customer Orders</h4>
+            <div class="table-responsive">
                 <table>
                     <thead><tr><th>Customer</th><th>Product</th><th>Price</th><th>Payment ID</th><th>Action</th></tr></thead>
                     <tbody id="admin-orders-list"></tbody>
                 </table>
             </div>
 
-            <h4>Pending Payouts (Queue)</h4>
-            <div class="table-responsive" style="margin-bottom: 20px;">
+            <h4 class="section-title">Pending Payouts (Queue)</h4>
+            <div class="table-responsive">
                 <table>
                     <thead><tr><th>Requested At</th><th>Insta ID</th><th>UPI ID</th><th>Amount</th><th>Action</th></tr></thead>
                     <tbody id="admin-withdrawal-list"></tbody>
                 </table>
             </div>
 
-            <h4>Customers Database & Logs</h4>
+            <h4 class="section-title">Customers Database & Logs</h4>
             <div class="table-responsive">
                 <table>
                     <thead><tr><th>Insta ID</th><th>Limit</th><th>T&C Agreed On</th><th>Action</th></tr></thead>
@@ -166,42 +172,42 @@
             </div>
         </div>
 
-        <div id="dashboard-section" class="card hidden">
+        <div id="dashboard-section" class="card hidden fade-in">
             <div class="user-welcome">
-                <h3>Hi, <span id="user-display-name">User</span></h3>
+                <h3>Hi, <span id="user-display-name" class="text-gradient">User</span> 👋</h3>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
 
-            <div class="tabs" style="margin-bottom: 15px;">
+            <div class="tabs">
                 <button id="nav-store" class="tab-btn active" onclick="switchUserTab('store')">Premium Store</button>
                 <button id="nav-wallet" class="tab-btn" onclick="switchUserTab('wallet')">My Wallet</button>
                 <button id="nav-purchases" class="tab-btn" onclick="switchUserTab('purchases')">Downloads</button>
                 <button id="nav-profile" class="tab-btn" onclick="switchUserTab('profile')">My Profile</button>
             </div>
 
-            <div id="view-store">
-                <h4>Premium Collection</h4>
+            <div id="view-store" class="fade-in">
+                <h4 class="section-title">✨ Premium Collection</h4>
                 <div id="store-items-container" class="store-grid"></div>
             </div>
 
-            <div id="view-purchases" class="hidden">
-                <h4>My Purchased Wallpapers</h4>
+            <div id="view-purchases" class="hidden fade-in">
+                <h4 class="section-title">📥 My Purchased Wallpapers</h4>
                 <div id="my-downloads-list" class="store-grid"></div>
             </div>
 
-            <div id="view-wallet" class="hidden">
+            <div id="view-wallet" class="hidden fade-in">
                 <div class="wallet-card">
                     <div class="wallet-balance">
                         <p>Available Balance</p>
                         <h2>₹<span id="wallet-amount">0</span></h2>
                     </div>
-                    <button id="withdraw-btn" class="btn-withdraw hidden" onclick="requestWithdrawal()">Request Withdrawal</button>
+                    <button id="withdraw-btn" class="btn-main hidden" onclick="requestWithdrawal()">Request Withdrawal</button>
                     <p id="withdraw-msg" class="info-text">Checking eligibility...</p>
                 </div>
 
                 <div class="referral-link-box">
-                    <h4>Share & Earn 50%</h4>
-                    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">Ask new customers to enter your Insta ID as the 'Referrer ID' during registration.</p>
+                    <h4>🚀 Share & Earn 50%</h4>
+                    <p>Ask new customers to enter your Insta ID as the 'Referrer ID' during registration.</p>
                     <div class="copy-box">
                         <input type="text" id="share-link" readonly>
                         <button onclick="copyLink()">Copy ID</button>
@@ -209,7 +215,7 @@
                 </div>
 
                 <div class="referral-table-section">
-                    <h4>Affiliate Earnings Report</h4>
+                    <h4 class="section-title">Affiliate Earnings Report</h4>
                     <div class="table-responsive">
                         <table>
                             <thead><tr><th>Customer</th><th>Amount</th><th>Bonus</th><th>Status</th></tr></thead>
@@ -219,13 +225,13 @@
                 </div>
             </div>
 
-            <div id="view-profile" class="hidden">
-                <h4>Account Details</h4>
-                <div class="card" style="border: 1px dashed var(--border-color); box-shadow: none;">
+            <div id="view-profile" class="hidden fade-in">
+                <h4 class="section-title">⚙️ Account Details</h4>
+                <div class="card inner-card">
                     <form onsubmit="handleUpdateProfile(event)">
                         <div class="input-group">
                             <label>Instagram ID (Cannot be changed)</label>
-                            <input type="text" id="prof-insta" disabled style="opacity: 0.6; cursor: not-allowed;">
+                            <input type="text" id="prof-insta" disabled class="disabled-input">
                         </div>
                         <div class="input-group">
                             <label>Full Name</label>
@@ -243,24 +249,23 @@
                             <label>Profession</label>
                             <input type="text" id="prof-work" required>
                         </div>
-                        <div class="input-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                        <div class="input-group divider-top">
                             <label>Change Password (Leave blank to keep current)</label>
                             <input type="password" id="prof-pass" placeholder="Enter new password">
                         </div>
-                        <button type="submit" class="btn-main" style="background-color: #63b3ed;">Save Changes</button>
+                        <button type="submit" class="btn-main">Save Changes</button>
                     </form>
                 </div>
             </div>
-
         </div>
     </div>
 
+    <!-- Modals -->
     <div id="forgot-pass-modal" class="modal hidden">
         <div class="modal-content card">
             <span class="close" onclick="closeForgotPassModal()">&times;</span>
-            <h3 style="color:var(--accent-color); margin-bottom: 15px;">Reset Password</h3>
-            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:15px;">To verify your identity, please enter your registered UPI ID.</p>
-            
+            <h3 class="text-gradient">Reset Password</h3>
+            <p class="info-text">To verify your identity, please enter your registered UPI ID.</p>
             <form onsubmit="handleForgotPassword(event)">
                 <div class="input-group">
                     <input type="text" id="fg-insta" placeholder="Enter your Instagram ID" required>
@@ -279,21 +284,26 @@
     <div id="user-modal" class="modal hidden">
         <div class="modal-content card">
             <span class="close" onclick="closeAdminModal()">&times;</span>
-            <h2 id="modal-user-title" style="color: var(--accent-color); margin-bottom: 10px;">User Details</h2>
-            <div class="modal-stats" style="margin-bottom: 15px;">
+            <h2 id="modal-user-title" class="text-gradient">User Details</h2>
+            <div class="modal-stats">
                 <p><strong>Name:</strong> <span id="mod-name"></span></p>
                 <p><strong>UPI ID:</strong> <span id="mod-upi"></span></p>
                 <p><strong>Purchase Limit:</strong> ₹<span id="mod-limit"></span></p>
                 <p><strong>T&C Agreed:</strong> <span id="mod-tc"></span></p>
                 <p><strong>Account Status:</strong> <span id="mod-status"></span></p>
             </div>
-            <div id="modal-actions" style="display: flex; gap: 10px; flex-direction: column;"></div>
+            <div id="modal-actions" class="modal-actions"></div>
         </div>
     </div>
 
+    <!-- Floating Support Button -->
+    <a href="mailto:wallpaperworld7151@gmail.com?subject=Wallpaper World Support Request" class="floating-support-btn">
+        💬 Support
+    </a>
+
+    <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="app.js"></script>
 </body>
