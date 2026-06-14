@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Mobile Menu Dark Overlay -->
+    <div id="menu-overlay" class="menu-overlay" onclick="closeMenu()"></div>
+
     <div class="app-container">
         <header class="brand-header">
             <h1 class="glow-text">Wallpaper World</h1>
@@ -91,10 +94,14 @@
 
         <div id="admin-dashboard" class="card hidden fade-in">
             <div class="user-welcome">
-                <h3>👑 Admin Control Panel</h3>
+                <div style="display: flex; align-items: center;">
+                    <button class="menu-btn" onclick="toggleMenu()">☰</button>
+                    <h3 style="margin: 0;">👑 Admin Panel</h3>
+                </div>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
 
+            <!-- Top Stats (Always Visible) -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <p>LIFETIME EARNING</p>
@@ -124,69 +131,101 @@
                     <h3><span id="stat-total-req">0</span></h3>
                 </div>
             </div>
-            
-            <div class="admin-mock-panel">
-                <h3>🖼️ Add Wallpaper to Store</h3>
-                <div class="admin-grid">
-                    <input type="text" id="adm-wall-name" placeholder="Wallpaper Title (e.g., 4K Anime)">
-                    <input type="number" id="adm-wall-price" placeholder="Price (₹)">
-                    <input type="text" id="adm-wall-img" placeholder="Watermark Image URL (Preview)">
-                    <input type="text" id="adm-wall-drive" placeholder="Google Drive Link (HD)">
-                    <input type="text" id="adm-wall-instamojo" placeholder="Not needed for Razorpay (Leave Blank)">
-                    <button onclick="adminAddWallpaper()" class="btn-main">Publish to Store</button>
+
+            <!-- Admin Navigation Tabs -->
+            <div class="tabs" style="margin-top: 20px;">
+                <button class="close-menu-btn" onclick="closeMenu()">&times;</button>
+                <button id="tab-adm-store" class="tab-btn active" onclick="switchAdminTab('store')">🏪 Manage Store</button>
+                <button id="tab-adm-orders" class="tab-btn" onclick="switchAdminTab('orders')">📦 Orders</button>
+                <button id="tab-adm-withdrawals" class="tab-btn" onclick="switchAdminTab('withdrawals')">💸 Payouts</button>
+                <button id="tab-adm-users" class="tab-btn" onclick="switchAdminTab('users')">👥 Users Database</button>
+            </div>
+
+            <!-- Admin Store Section -->
+            <div id="admin-view-store" class="fade-in">
+                <div class="admin-mock-panel">
+                    <h3>🖼️ Add Wallpaper to Store</h3>
+                    <div class="admin-grid">
+                        <input type="text" id="adm-wall-name" placeholder="Wallpaper Title (e.g., 4K Anime)">
+                        <input type="number" id="adm-wall-price" placeholder="Price (₹)">
+                        <input type="text" id="adm-wall-img" placeholder="Watermark Image URL (Preview)">
+                        <input type="text" id="adm-wall-drive" placeholder="Google Drive Link (HD)">
+                        <input type="text" id="adm-wall-instamojo" placeholder="Not needed for Razorpay (Leave Blank)">
+                        <button onclick="adminAddWallpaper()" class="btn-main">Publish to Store</button>
+                    </div>
+                </div>
+
+                <div class="admin-mock-panel border-danger">
+                    <h3 class="text-danger">🗑️ Manage Store Items</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Preview</th><th>Name</th><th>Price</th><th>Action</th></tr></thead>
+                            <tbody id="admin-store-list"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <div class="admin-mock-panel border-danger">
-                <h3 class="text-danger">🗑️ Manage Store Items</h3>
+            <!-- Admin Orders Section -->
+            <div id="admin-view-orders" class="hidden fade-in">
+                <h4 class="section-title">Approve Customer Orders</h4>
                 <div class="table-responsive">
                     <table>
-                        <thead><tr><th>Preview</th><th>Name</th><th>Price</th><th>Action</th></tr></thead>
-                        <tbody id="admin-store-list"></tbody>
+                        <thead><tr><th>Customer</th><th>Product</th><th>Price</th><th>Payment ID</th><th>Action</th></tr></thead>
+                        <tbody id="admin-orders-list"></tbody>
                     </table>
                 </div>
             </div>
 
-            <h4 class="section-title">Approve Customer Orders</h4>
-            <div class="table-responsive">
-                <table>
-                    <thead><tr><th>Customer</th><th>Product</th><th>Price</th><th>Payment ID</th><th>Action</th></tr></thead>
-                    <tbody id="admin-orders-list"></tbody>
-                </table>
+            <!-- Admin Withdrawals Section -->
+            <div id="admin-view-withdrawals" class="hidden fade-in">
+                <h4 class="section-title">Pending Payouts (Queue)</h4>
+                <div id="admin-bonus-breakdown-target"></div>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Requested At</th><th>Insta ID</th><th>UPI ID</th><th>Amount</th><th>Action</th></tr></thead>
+                        <tbody id="admin-withdrawal-list"></tbody>
+                    </table>
+                </div>
             </div>
 
-            <h4 class="section-title">Pending Payouts (Queue)</h4>
-            <div class="table-responsive">
-                <table>
-                    <thead><tr><th>Requested At</th><th>Insta ID</th><th>UPI ID</th><th>Amount</th><th>Action</th></tr></thead>
-                    <tbody id="admin-withdrawal-list"></tbody>
-                </table>
-            </div>
-
-            <h4 class="section-title">Customers Database & Logs</h4>
-            <div class="table-responsive">
-                <table>
-                    <thead><tr><th>Insta ID</th><th>Limit</th><th>T&C Agreed On</th><th>Action</th></tr></thead>
-                    <tbody id="admin-all-users-list"></tbody>
-                </table>
+            <!-- Admin Users Section -->
+            <div id="admin-view-users" class="hidden fade-in">
+                <h4 class="section-title">Customers Database & Logs</h4>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Insta ID</th><th>Limit</th><th>T&C Agreed On</th><th>Action</th></tr></thead>
+                        <tbody id="admin-all-users-list"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div id="dashboard-section" class="card hidden fade-in">
             <div class="user-welcome">
-                <h3>Hi, <span id="user-display-name" class="text-gradient">User</span> 👋</h3>
+                <div style="display: flex; align-items: center;">
+                    <button class="menu-btn" onclick="toggleMenu()">☰</button>
+                    <h3 style="margin: 0;">Hi, <span id="user-display-name" class="text-gradient">User</span> 👋</h3>
+                </div>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
 
             <div class="tabs">
-                <button id="nav-store" class="tab-btn active" onclick="switchUserTab('store')">Premium Store</button>
-                <button id="nav-wallet" class="tab-btn" onclick="switchUserTab('wallet')">My Wallet</button>
-                <button id="nav-purchases" class="tab-btn" onclick="switchUserTab('purchases')">Downloads</button>
-                <button id="nav-profile" class="tab-btn" onclick="switchUserTab('profile')">My Profile</button>
+                <button class="close-menu-btn" onclick="closeMenu()">&times;</button>
+                <button id="nav-store" class="tab-btn active" onclick="switchUserTab('store')">✨ Premium Store</button>
+                <button id="nav-wallet" class="tab-btn" onclick="switchUserTab('wallet')">💰 My Wallet</button>
+                <button id="nav-purchases" class="tab-btn" onclick="switchUserTab('purchases')">📥 Downloads</button>
+                <button id="nav-profile" class="tab-btn" onclick="switchUserTab('profile')">⚙️ My Profile</button>
             </div>
 
             <div id="view-store" class="fade-in">
                 <h4 class="section-title">✨ Premium Collection</h4>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <input type="text" id="search-store" placeholder="🔍 Search wallpapers (e.g., Anime)" style="flex: 1; min-width: 200px; padding: 12px; border-radius: 8px; background: var(--input-bg); border: 1px solid var(--card-border); color: white; outline: none;" onkeyup="filterStore()">
+                    <input type="number" id="filter-price" placeholder="Price ₹" style="width: 120px; padding: 12px; border-radius: 8px; background: var(--input-bg); border: 1px solid var(--card-border); color: white; outline: none;" onkeyup="filterStore()">
+                </div>
+
                 <div id="store-items-container" class="store-grid"></div>
             </div>
 

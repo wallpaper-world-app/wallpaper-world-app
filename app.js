@@ -38,7 +38,7 @@ function copyText(text) {
     });
 }
 
-// === AUTOMATIC PAYMENT VERIFICATION LOGIC (LEGACY INSTAMOJO CHECK) ===
+// === AUTOMATIC PAYMENT VERIFICATION LOGIC ===
 async function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment_status');
@@ -107,7 +107,24 @@ async function loadDataFromFirebase() {
 }
 loadDataFromFirebase();
 
-// UI Toggles
+// === NEW: MOBILE MENU LOGIC ===
+function toggleMenu() {
+    const activeTabs = document.querySelector('.card:not(.hidden) .tabs');
+    const overlay = document.getElementById('menu-overlay');
+    if (activeTabs) {
+        activeTabs.classList.toggle('open');
+        overlay.classList.toggle('active');
+    }
+}
+
+function closeMenu() {
+    const activeTabs = document.querySelector('.card:not(.hidden) .tabs');
+    const overlay = document.getElementById('menu-overlay');
+    if (activeTabs) activeTabs.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+}
+
+// UI Toggles (User)
 function switchTab(type) {
     document.getElementById('login-form').classList.toggle('hidden', type !== 'login');
     document.getElementById('register-form').classList.toggle('hidden', type !== 'register');
@@ -127,6 +144,22 @@ function switchUserTab(type) {
     document.getElementById('nav-profile').classList.toggle('active', type === 'profile');
 
     if (type === 'profile') loadProfileData();
+    closeMenu(); // Tab click hone par menu automatically band ho jayega
+}
+
+// UI Toggles (Admin)
+function switchAdminTab(type) {
+    document.getElementById('admin-view-store').classList.toggle('hidden', type !== 'store');
+    document.getElementById('admin-view-orders').classList.toggle('hidden', type !== 'orders');
+    document.getElementById('admin-view-withdrawals').classList.toggle('hidden', type !== 'withdrawals');
+    document.getElementById('admin-view-users').classList.toggle('hidden', type !== 'users');
+
+    document.getElementById('tab-adm-store').classList.toggle('active', type === 'store');
+    document.getElementById('tab-adm-orders').classList.toggle('active', type === 'orders');
+    document.getElementById('tab-adm-withdrawals').classList.toggle('active', type === 'withdrawals');
+    document.getElementById('tab-adm-users').classList.toggle('active', type === 'users');
+    
+    closeMenu(); // Tab click hone par menu automatically band ho jayega
 }
 
 // Authentication
@@ -155,7 +188,6 @@ function handleRegister(event) {
         users[instaId] = newUser;
         alert('✅ Account created successfully! Please log in.');
         
-        // Remove ref param from URL after successful registration
         window.history.replaceState({}, document.title, window.location.pathname);
         switchTab('login');
     });
@@ -207,7 +239,6 @@ function loadDashboard() {
     document.getElementById('dashboard-section').classList.remove('hidden');
     document.getElementById('user-display-name').innerText = users[currentUser].name;
     
-    // --- LINK GENERATION LOGIC UPDATE ---
     const baseUrl = window.location.origin + window.location.pathname;
     document.getElementById('share-link').value = `${baseUrl}?ref=${currentUser}`;
 
@@ -226,12 +257,31 @@ function loadProfileData() {
     document.getElementById('prof-pass').value = "";
 }
 
+// Exact Match Filter Logic
+function filterStore() {
+    renderStore(); 
+}
+
 function renderStore() {
     const container = document.getElementById('store-items-container');
+    if (!container) return;
+    
     container.innerHTML = '';
     const myBoughtIds = orders.filter(o => o.buyer === currentUser && o.status === 'approved').map(o => o.itemId);
 
+    const searchInput = document.getElementById('search-store');
+    const priceInput = document.getElementById('filter-price');
+    
+    const searchText = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const exactPrice = (priceInput && priceInput.value !== '') ? parseFloat(priceInput.value) : null;
+
+    let itemsShown = 0;
+
     storeItems.forEach(item => {
+        if (searchText && !item.name.toLowerCase().includes(searchText)) return;
+        if (exactPrice !== null && item.price !== exactPrice) return;
+
+        itemsShown++;
         const div = document.createElement('div');
         div.className = 'store-item';
         if (myBoughtIds.includes(item.id)) {
@@ -241,9 +291,13 @@ function renderStore() {
         }
         container.appendChild(div);
     });
+
+    if (itemsShown === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted); font-size:1rem; grid-column: 1 / -1; text-align: center;">No wallpapers found matching your search. 🕵️‍♂️</p>`;
+    }
 }
 
-// Razorpay Order Creation and Modal Management Frontend Flow (AUTOMATED & SECURE)
+// Razorpay Order Creation
 async function payWithRazorpay(itemId, price) {
     if (!currentUser) { alert("Please log in to purchase wallpapers."); return; }
 
@@ -336,16 +390,12 @@ async function payWithRazorpay(itemId, price) {
                     alert('Payment Security Verification Failed: ' + verifyData.message);
                 }
             },
-            modal: {
-                ondismiss: function () { console.log('Payment checkout window was closed by user.'); }
-            },
+            modal: { ondismiss: function () { console.log('Payment checkout window was closed by user.'); } },
             theme: { color: "#63b3ed" }
         };
 
         const rzp = new Razorpay(options);
-        rzp.on('payment.failed', function (response) {
-            alert('Transaction Declined: ' + response.error.description);
-        });
+        rzp.on('payment.failed', function (response) { alert('Transaction Declined: ' + response.error.description); });
         rzp.open();
 
     } catch (error) {
@@ -435,7 +485,7 @@ function requestWithdrawal() {
 }
 
 // ==========================================================
-// 👑 SUPER ADMIN SECTION (WITH AUTOMATED DATA BREAKDOWNS)
+// 👑 SUPER ADMIN SECTION
 // ==========================================================
 function loadAdminDashboard() {
     document.getElementById('auth-section').classList.add('hidden');
@@ -466,10 +516,10 @@ function loadAdminDashboard() {
     document.getElementById('stat-pend-bonus').innerText = pendBonus;
     document.getElementById('stat-sent-bonus').innerText = sentBonus;
 
-    // --- DYNAMICALLY INJECT PENDING BONUS BREAKDOWN TABLE IF NOT EXISTS ---
+    // --- PENDING BONUS BREAKDOWN ---
     let breakdownHTML = `
-        <div id="admin-bonus-breakdown-container" style="background:#1a202c; border:1px solid #2d3748; padding:15px; border-radius:8px; margin-top:20px; margin-bottom:20px;">
-            <h4 style="color:#ed8936; margin-top:0; margin-bottom:12px; font-size:1.1rem;">📋 Pending Bonus User Breakdown (Total: ₹${pendBonus})</h4>
+        <div id="admin-bonus-breakdown-container" style="background:#1a202c; border:1px solid #2d3748; padding:15px; border-radius:8px; margin-bottom:20px;">
+            <h4 style="color:#ed8936; margin-top:0; margin-bottom:12px; font-size:1.1rem;">📋 Payout Queue Details (Total: ₹${pendBonus})</h4>
             <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.9rem;">
                 <thead>
                     <tr style="border-bottom:2px solid #2d3748; color:#a0aec0;">
@@ -502,19 +552,9 @@ function loadAdminDashboard() {
         });
     }
     breakdownHTML += `</tbody></table></div>`;
+    document.getElementById('admin-bonus-breakdown-target').innerHTML = breakdownHTML;
 
-    let existingSection = document.getElementById('admin-bonus-breakdown-container');
-    if (existingSection) {
-        existingSection.outerHTML = breakdownHTML;
-    } else {
-        const insertionTarget = document.getElementById('admin-orders-list') || document.getElementById('admin-withdrawal-list');
-        if (insertionTarget) {
-            const parentTableElement = insertionTarget.closest('table') || insertionTarget;
-            parentTableElement.insertAdjacentHTML('beforebegin', breakdownHTML);
-        }
-    }
-
-    // Render Orders Table
+    // Render Orders
     const ordersTable = document.getElementById('admin-orders-list');
     ordersTable.innerHTML = '';
     orders.filter(o => o.status === 'pending').forEach(o => {
@@ -524,18 +564,15 @@ function loadAdminDashboard() {
         ordersTable.appendChild(row);
     });
 
-    // Render Withdrawal Queue
+    // Render Withdrawals
     const adminWithdrawalTable = document.getElementById('admin-withdrawal-list');
     adminWithdrawalTable.innerHTML = '';
-
     let pendingReqs = [];
     let todayReqCount = 0;
     Object.keys(users).forEach(id => {
         if (users[id].withdrawalRequested && !users[id].isBanned) {
             pendingReqs.push({ id: id, time: users[id].withdrawalRequestTime || 0 });
-
-            const reqDateStr = new Date(users[id].withdrawalRequestTime).toLocaleDateString();
-            if (reqDateStr === todayDateStr) { todayReqCount++; }
+            if (new Date(users[id].withdrawalRequestTime).toLocaleDateString() === todayDateStr) { todayReqCount++; }
         }
     });
     pendingReqs.sort((a, b) => a.time - b.time);
@@ -546,18 +583,16 @@ function loadAdminDashboard() {
     pendingReqs.forEach(req => {
         const userId = req.id;
         const uObj = users[userId] || { name: 'N/A', upiId: 'N/A' };
-        const dateObj = new Date(req.time);
-        const timeStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString();
         let payAmount = 0;
         referrals.forEach(ref => { if (ref.referredBy === userId && ref.status === 'success') payAmount += ref.bonus; });
 
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td style="font-size:0.8rem;">${timeStr}</td>
+            <td style="font-size:0.8rem;">${new Date(req.time).toLocaleDateString()}</td>
             <td><strong>${userId}</strong><br><span style="font-size:0.8rem; color:#a0aec0;">(${uObj.name})</span></td>
             <td>
                 <span style="font-family:monospace; background:#2d3748; padding:3px 6px; border-radius:4px; color:#cbd5e0; font-size:0.85rem;">${uObj.upiId}</span>
-                <button onclick="copyText('${uObj.upiId}')" style="background:#3182ce; color:#fff; padding:3px 8px; margin-left:6px; border:none; border-radius:4px; cursor:pointer; font-size:0.75rem; font-weight:bold;">Copy UPI</button>
+                <button onclick="copyText('${uObj.upiId}')" style="background:#3182ce; color:#fff; padding:3px 8px; margin-left:6px; border:none; border-radius:4px; cursor:pointer; font-size:0.75rem;">Copy UPI</button>
             </td>
             <td style="color:#00ff88; font-weight:bold; font-size:1rem;">₹${payAmount}</td>
             <td><button onclick="payFromModal('${userId}')" style="background:#48bb78; color:#fff; padding:5px; border:none; border-radius:4px; cursor:pointer;">Pay User</button></td>
@@ -565,21 +600,15 @@ function loadAdminDashboard() {
         adminWithdrawalTable.appendChild(row);
     });
 
-    // --- CUSTOMERS DATABASE & LOGS LIST (WITH DYNAMIC REFERRAL TRACKER) ---
+    // Render Users
     const allUsersTable = document.getElementById('admin-all-users-list');
     allUsersTable.innerHTML = '';
     Object.keys(users).forEach(userId => {
         const u = users[userId];
-
-        // Referrals array se calculate karein ki is specific user ne kitne logo ko successfully add kiya hai
         const totalUserReferrals = referrals.filter(ref => ref.referredBy === userId).length;
-
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>
-                <strong>${userId}</strong><br>
-                <span style="font-size:0.8rem; color:#3182ce; font-weight:bold;">👥 Refs: ${totalUserReferrals} users</span>
-            </td>
+            <td><strong>${userId}</strong><br><span style="font-size:0.8rem; color:#3182ce; font-weight:bold;">👥 Refs: ${totalUserReferrals} users</span></td>
             <td>₹${u.purchaseValue}</td>
             <td style="font-size:0.75rem;">${u.tcAgreedAt}</td>
             <td><button onclick="viewUserDetails('${userId}')" style="background:var(--border-color); color:#fff; padding:5px 10px; border:none; border-radius:4px; cursor:pointer;">Manage</button></td>
@@ -587,6 +616,7 @@ function loadAdminDashboard() {
         allUsersTable.appendChild(row);
     });
 
+    // Render Admin Store List
     const adminStoreList = document.getElementById('admin-store-list');
     if (adminStoreList) {
         adminStoreList.innerHTML = '';
@@ -697,7 +727,6 @@ function viewUserDetails(userId) {
     const user = users[userId];
     const totalUserReferrals = referrals.filter(ref => ref.referredBy === userId).length;
 
-    // Manage Modal panel configuration details
     document.getElementById('modal-user-title').innerText = `${userId} (Refs: ${totalUserReferrals})`;
     document.getElementById('mod-name').innerText = user.name;
     document.getElementById('mod-upi').innerText = user.upiId;
@@ -734,7 +763,6 @@ function deleteWallpaper(itemId) {
     }
 }
 
-// Global functions mappings definitions
 function closeAdminModal() { document.getElementById('user-modal').classList.add('hidden'); }
 function logout() { currentUser = null; localStorage.removeItem('ww_current_user'); location.reload(); }
 
@@ -744,21 +772,16 @@ function copyLink() {
     alert("🔗 Referral Link Copied! Send this to your friends.");
 }
 
-// ==========================================================
-// --- AUTO FILL REFERRAL LOGIC (NEW AUTOMATION) ---
-// ==========================================================
+// AUTO FILL REFERRAL LOGIC
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     const refId = urlParams.get('ref');
     
     if (refId) {
-        // Agar link mein referral ID hai, toh input box mein auto-fill kar do
         const referrerInput = document.getElementById('reg-referrer');
         if (referrerInput) {
             referrerInput.value = refId;
         }
-        
-        // Aur automatically 'Register' wala page/tab khol do
         if (typeof switchTab === "function") {
             switchTab('register');
         }
