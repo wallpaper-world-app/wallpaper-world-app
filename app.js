@@ -43,31 +43,31 @@ async function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment_status');
     const paymentId = urlParams.get('payment_id');
-    
+
     if (paymentStatus === 'Credit') {
         const pUser = localStorage.getItem('pendingOrder_user');
         const pItem = localStorage.getItem('pendingOrder_item');
-        
+
         if (pUser && pItem) {
             setTimeout(async () => {
                 const item = storeItems.find(i => i.id === pItem);
                 if (item) {
                     const newOrder = {
                         orderId: paymentId || ('ORD_' + Date.now()),
-                        buyer: pUser, itemId: pItem, itemName: item.name, 
+                        buyer: pUser, itemId: pItem, itemName: item.name,
                         price: item.price, utr: paymentId || 'Instamojo', status: 'pending', date: new Date().toLocaleString()
                     };
-                    
+
                     await db.collection('orders').doc(newOrder.orderId).set(newOrder);
                     orders.push(newOrder);
                     alert("✅ Payment Successful! Your order has been placed. Admin will verify it shortly.");
-                    
+
                     localStorage.removeItem('pendingOrder_user');
                     localStorage.removeItem('pendingOrder_item');
-                    
+
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
-            }, 3000); 
+            }, 3000);
         }
     } else if (paymentStatus === 'Failed') {
         alert("❌ Payment Failed. Please try again.");
@@ -105,7 +105,7 @@ async function loadDataFromFirebase() {
         alert("Database load error. Internet connection check karein.");
     }
 }
-loadDataFromFirebase(); 
+loadDataFromFirebase();
 
 // UI Toggles
 function switchTab(type) {
@@ -120,13 +120,13 @@ function switchUserTab(type) {
     document.getElementById('view-wallet').classList.toggle('hidden', type !== 'wallet');
     document.getElementById('view-purchases').classList.toggle('hidden', type !== 'purchases');
     document.getElementById('view-profile').classList.toggle('hidden', type !== 'profile');
-    
+
     document.getElementById('nav-store').classList.toggle('active', type === 'store');
     document.getElementById('nav-wallet').classList.toggle('active', type === 'wallet');
     document.getElementById('nav-purchases').classList.toggle('active', type === 'purchases');
     document.getElementById('nav-profile').classList.toggle('active', type === 'profile');
-    
-    if(type === 'profile') loadProfileData();
+
+    if (type === 'profile') loadProfileData();
 }
 
 // Authentication
@@ -147,13 +147,16 @@ function handleRegister(event) {
     const currentDateTime = new Date().toLocaleString();
     const newUser = {
         name: name, instaId: instaId, password: password, upiId: upiId, age: age, work: work,
-        referredBy: referrerId || null, purchaseValue: 0, withdrawalCount: 0, withdrawalRequested: false, 
-        withdrawalRequestTime: null, isBanned: false, tcAgreedAt: currentDateTime 
+        referredBy: referrerId || null, purchaseValue: 0, withdrawalCount: 0, withdrawalRequested: false,
+        withdrawalRequestTime: null, isBanned: false, tcAgreedAt: currentDateTime
     };
 
     db.collection('users').doc(instaId).set(newUser).then(() => {
         users[instaId] = newUser;
         alert('✅ Account created successfully! Please log in.');
+        
+        // Remove ref param from URL after successful registration
+        window.history.replaceState({}, document.title, window.location.pathname);
         switchTab('login');
     });
 }
@@ -203,7 +206,10 @@ function loadDashboard() {
     document.getElementById('auth-section').classList.add('hidden');
     document.getElementById('dashboard-section').classList.remove('hidden');
     document.getElementById('user-display-name').innerText = users[currentUser].name;
-    document.getElementById('share-link').value = currentUser;
+    
+    // --- LINK GENERATION LOGIC UPDATE ---
+    const baseUrl = window.location.origin + window.location.pathname;
+    document.getElementById('share-link').value = `${baseUrl}?ref=${currentUser}`;
 
     renderStore();
     renderMyDownloads();
@@ -217,7 +223,7 @@ function loadProfileData() {
     document.getElementById('prof-upi').value = user.upiId;
     document.getElementById('prof-age').value = user.age;
     document.getElementById('prof-work').value = user.work;
-    document.getElementById('prof-pass').value = ""; 
+    document.getElementById('prof-pass').value = "";
 }
 
 function renderStore() {
@@ -240,7 +246,7 @@ function renderStore() {
 // Razorpay Order Creation and Modal Management Frontend Flow (AUTOMATED & SECURE)
 async function payWithRazorpay(itemId, price) {
     if (!currentUser) { alert("Please log in to purchase wallpapers."); return; }
-    
+
     const amountInPaise = price * 100;
     const item = storeItems.find(i => i.id === itemId);
 
@@ -255,7 +261,7 @@ async function payWithRazorpay(itemId, price) {
         if (!orderResponse.ok) { alert('Order Error: ' + orderData.error); return; }
 
         const options = {
-            key: "rzp_live_SzXXGobm5zLdcN", 
+            key: "rzp_live_SzXXGobm5zLdcN",
             amount: orderData.amount,
             currency: orderData.currency,
             name: "Wallpaper World",
@@ -278,27 +284,27 @@ async function payWithRazorpay(itemId, price) {
                     const newOrderId = response.razorpay_order_id;
                     const newOrder = {
                         orderId: newOrderId,
-                        buyer: currentUser, 
-                        itemId: itemId, 
-                        itemName: item.name, 
-                        price: item.price, 
-                        utr: response.razorpay_payment_id, 
-                        status: 'approved', 
+                        buyer: currentUser,
+                        itemId: itemId,
+                        itemName: item.name,
+                        price: item.price,
+                        utr: response.razorpay_payment_id,
+                        status: 'approved',
                         date: new Date().toLocaleString()
                     };
-                    
+
                     await db.collection('orders').doc(newOrderId).set(newOrder);
                     orders.push(newOrder);
-                    
+
                     const buyerObj = users[currentUser];
                     if (buyerObj) {
                         if (item.price > buyerObj.purchaseValue) {
                             await db.collection('users').doc(currentUser).update({ purchaseValue: item.price });
                             buyerObj.purchaseValue = item.price;
-                            
+
                             referrals.forEach(ref => {
                                 if (ref.referredBy === currentUser && ref.status === 'on_hold' && item.price >= ref.price) {
-                                    ref.status = 'success'; 
+                                    ref.status = 'success';
                                     db.collection('referrals').doc(ref.id).update({ status: 'success' });
                                 }
                             });
@@ -308,24 +314,24 @@ async function payWithRazorpay(itemId, price) {
                             const referrerObj = users[buyerObj.referredBy];
                             if (referrerObj) {
                                 const commStatus = (item.price > referrerObj.purchaseValue) ? 'on_hold' : 'success';
-                                const newRef = { 
-                                    id: 'REF_' + Date.now(), 
-                                    referredBy: buyerObj.referredBy, 
-                                    buyer: currentUser, 
-                                    price: item.price, 
-                                    bonus: item.price * 0.50, 
-                                    status: commStatus 
+                                const newRef = {
+                                    id: 'REF_' + Date.now(),
+                                    referredBy: buyerObj.referredBy,
+                                    buyer: currentUser,
+                                    price: item.price,
+                                    bonus: item.price * 0.50,
+                                    status: commStatus
                                 };
                                 referrals.push(newRef);
                                 await db.collection('referrals').doc(newRef.id).set(newRef);
                             }
                         }
                     }
-                    
+
                     alert("✅ Payment Successful! Your wallpaper is ready to download.");
                     renderStore();
                     renderMyDownloads();
-                    if(currentUser === 'admin_master' || currentUser === ADMIN_ID) { loadAdminDashboard(); }
+                    if (currentUser === 'admin_master' || currentUser === ADMIN_ID) { loadAdminDashboard(); }
                 } else {
                     alert('Payment Security Verification Failed: ' + verifyData.message);
                 }
@@ -395,8 +401,8 @@ function renderReferralsAndWallet() {
     myReferrals.forEach(ref => {
         const row = document.createElement('tr');
         let statusClass = 'status-pending';
-        if (ref.status === 'success') { statusClass = 'status-success'; successfulCount++; totalPendingBonus += ref.bonus; } 
-        else if (ref.status === 'credited') { statusClass = 'status-credited'; } 
+        if (ref.status === 'success') { statusClass = 'status-success'; successfulCount++; totalPendingBonus += ref.bonus; }
+        else if (ref.status === 'credited') { statusClass = 'status-credited'; }
         else if (ref.status === 'on_hold') { statusClass = 'status-pending'; }
 
         row.innerHTML = `<td>${ref.buyer}</td><td>₹${ref.price}</td><td>₹${ref.bonus}</td><td class="${statusClass}">${ref.status.toUpperCase()}</td>`;
@@ -410,10 +416,10 @@ function renderReferralsAndWallet() {
     if (userObj.withdrawalRequested) { wBtn.classList.add('hidden'); wMsg.innerText = "⏳ Payout request is pending."; return; }
 
     if (userObj.withdrawalCount === 0) {
-        if (successfulCount >= 2 && totalPendingBonus > 0) { wBtn.classList.remove('hidden'); wMsg.innerText = "You are eligible to withdraw!"; } 
+        if (successfulCount >= 2 && totalPendingBonus > 0) { wBtn.classList.remove('hidden'); wMsg.innerText = "You are eligible to withdraw!"; }
         else { wBtn.classList.add('hidden'); wMsg.innerText = `Minimum 2 successful referrals required. Current: ${successfulCount}`; }
     } else {
-        if (totalPendingBonus > 0) { wBtn.classList.remove('hidden'); wMsg.innerText = "Balance ready for withdrawal."; } 
+        if (totalPendingBonus > 0) { wBtn.classList.remove('hidden'); wMsg.innerText = "Balance ready for withdrawal."; }
         else { wBtn.classList.add('hidden'); wMsg.innerText = "Need new verified referrals."; }
     }
 }
@@ -434,21 +440,21 @@ function requestWithdrawal() {
 function loadAdminDashboard() {
     document.getElementById('auth-section').classList.add('hidden');
     document.getElementById('admin-dashboard').classList.remove('hidden');
-    
+
     const todayDateStr = new Date().toLocaleDateString();
     let lifeEarn = 0, todayEarn = 0, pendBonus = 0, sentBonus = 0;
-    
+
     orders.forEach(o => {
         if (o.status === 'approved') {
             lifeEarn += o.price;
             if (o.date.split(',')[0].trim() === todayDateStr) { todayEarn += o.price; }
         }
     });
-    
+
     let activeBonusBreakdown = {};
     referrals.forEach(ref => {
-        if (ref.status === 'success') { 
-            pendBonus += ref.bonus; 
+        if (ref.status === 'success') {
+            pendBonus += ref.bonus;
             if (!activeBonusBreakdown[ref.referredBy]) { activeBonusBreakdown[ref.referredBy] = 0; }
             activeBonusBreakdown[ref.referredBy] += ref.bonus;
         }
@@ -521,15 +527,15 @@ function loadAdminDashboard() {
     // Render Withdrawal Queue
     const adminWithdrawalTable = document.getElementById('admin-withdrawal-list');
     adminWithdrawalTable.innerHTML = '';
-    
+
     let pendingReqs = [];
     let todayReqCount = 0;
     Object.keys(users).forEach(id => {
         if (users[id].withdrawalRequested && !users[id].isBanned) {
             pendingReqs.push({ id: id, time: users[id].withdrawalRequestTime || 0 });
-            
+
             const reqDateStr = new Date(users[id].withdrawalRequestTime).toLocaleDateString();
-            if(reqDateStr === todayDateStr) { todayReqCount++; }
+            if (reqDateStr === todayDateStr) { todayReqCount++; }
         }
     });
     pendingReqs.sort((a, b) => a.time - b.time);
@@ -564,7 +570,7 @@ function loadAdminDashboard() {
     allUsersTable.innerHTML = '';
     Object.keys(users).forEach(userId => {
         const u = users[userId];
-        
+
         // Referrals array se calculate karein ki is specific user ne kitne logo ko successfully add kiya hai
         const totalUserReferrals = referrals.filter(ref => ref.referredBy === userId).length;
 
@@ -602,19 +608,19 @@ function adminAddWallpaper() {
     const price = document.getElementById('adm-wall-price').value.trim();
     const img = document.getElementById('adm-wall-img').value.trim();
     const drive = document.getElementById('adm-wall-drive').value.trim();
-    const instamojoUrl = document.getElementById('adm-wall-instamojo').value.trim(); 
+    const instamojoUrl = document.getElementById('adm-wall-instamojo').value.trim();
 
-    if(!name || !price || !img || !drive) { alert("Please fill all mandatory fields (Title, Price, Image, Drive Link)!"); return; }
+    if (!name || !price || !img || !drive) { alert("Please fill all mandatory fields (Title, Price, Image, Drive Link)!"); return; }
 
-    const newItem = { 
-        id: 'W_' + Date.now(), 
-        name: name, 
-        price: parseFloat(price), 
-        imgUrl: img, 
+    const newItem = {
+        id: 'W_' + Date.now(),
+        name: name,
+        price: parseFloat(price),
+        imgUrl: img,
         driveLink: drive,
-        instamojoLink: instamojoUrl || 'razorpay' 
+        instamojoLink: instamojoUrl || 'razorpay'
     };
-    
+
     db.collection('store').doc(newItem.id).set(newItem).then(() => {
         storeItems.push(newItem);
         alert("✅ Wallpaper successfully added to the store!");
@@ -622,7 +628,7 @@ function adminAddWallpaper() {
         document.getElementById('adm-wall-price').value = '';
         document.getElementById('adm-wall-img').value = '';
         document.getElementById('adm-wall-drive').value = '';
-        document.getElementById('adm-wall-instamojo').value = ''; 
+        document.getElementById('adm-wall-instamojo').value = '';
         loadAdminDashboard();
         renderStore();
     });
@@ -630,8 +636,8 @@ function adminAddWallpaper() {
 
 function approveOrder(orderId) {
     const orderIndex = orders.findIndex(o => o.orderId === orderId);
-    if(orderIndex === -1) return;
-    
+    if (orderIndex === -1) return;
+
     const order = orders[orderIndex];
     const buyerId = order.buyer;
     const buyerObj = users[buyerId];
@@ -639,14 +645,14 @@ function approveOrder(orderId) {
 
     db.collection('orders').doc(orderId).update({ status: 'approved' }).then(() => {
         order.status = 'approved';
-        
-        if(price > buyerObj.purchaseValue) {
+
+        if (price > buyerObj.purchaseValue) {
             db.collection('users').doc(buyerId).update({ purchaseValue: price });
             buyerObj.purchaseValue = price;
-            
+
             referrals.forEach(ref => {
                 if (ref.referredBy === buyerId && ref.status === 'on_hold' && price >= ref.price) {
-                    ref.status = 'success'; 
+                    ref.status = 'success';
                     db.collection('referrals').doc(ref.id).update({ status: 'success' });
                 }
             });
@@ -667,14 +673,14 @@ function approveOrder(orderId) {
 }
 
 function payFromModal(userId) {
-    if(confirm(`Confirm payment to ${userId}?`)){
-        referrals.forEach(ref => { 
+    if (confirm(`Confirm payment to ${userId}?`)) {
+        referrals.forEach(ref => {
             if (ref.referredBy === userId && ref.status === 'success') {
                 ref.status = 'credited';
                 db.collection('referrals').doc(ref.id).update({ status: 'credited' });
-            } 
+            }
         });
-        
+
         db.collection('users').doc(userId).update({
             withdrawalRequested: false, withdrawalCount: users[userId].withdrawalCount + 1, withdrawalRequestTime: null
         }).then(() => {
@@ -698,7 +704,7 @@ function viewUserDetails(userId) {
     document.getElementById('mod-limit').innerText = user.purchaseValue;
     document.getElementById('mod-tc').innerText = user.tcAgreedAt;
     document.getElementById('mod-status').innerHTML = user.isBanned ? '<span style="color:red;">BANNED</span>' : '<span style="color:green;">ACTIVE</span>';
-    
+
     const modalActions = document.getElementById('modal-actions');
     const banText = user.isBanned ? 'Unban Account' : 'Ban Account';
     modalActions.innerHTML = `<button onclick="toggleBanUser('${userId}')" style="background:var(--border-color); color:white; padding:10px; cursor:pointer;">${banText}</button>`;
@@ -731,8 +737,30 @@ function deleteWallpaper(itemId) {
 // Global functions mappings definitions
 function closeAdminModal() { document.getElementById('user-modal').classList.add('hidden'); }
 function logout() { currentUser = null; localStorage.removeItem('ww_current_user'); location.reload(); }
+
 function copyLink() {
     const linkInput = document.getElementById('share-link');
     linkInput.select(); document.execCommand("copy");
-    alert("Copied: " + linkInput.value);
+    alert("🔗 Referral Link Copied! Send this to your friends.");
 }
+
+// ==========================================================
+// --- AUTO FILL REFERRAL LOGIC (NEW AUTOMATION) ---
+// ==========================================================
+document.addEventListener("DOMContentLoaded", () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refId = urlParams.get('ref');
+    
+    if (refId) {
+        // Agar link mein referral ID hai, toh input box mein auto-fill kar do
+        const referrerInput = document.getElementById('reg-referrer');
+        if (referrerInput) {
+            referrerInput.value = refId;
+        }
+        
+        // Aur automatically 'Register' wala page/tab khol do
+        if (typeof switchTab === "function") {
+            switchTab('register');
+        }
+    }
+});
